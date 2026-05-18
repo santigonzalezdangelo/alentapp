@@ -17,4 +17,7 @@ export interface SportRepository {
 
     // Actualiza parcialmente los campos editables de un deporte.
     update(id: string, data: UpdateSportRequest): Promise<SportDTO>;
+
+    //borrado logico de un deporte
+    softDelete(id: string): Promise<void>;
 }
