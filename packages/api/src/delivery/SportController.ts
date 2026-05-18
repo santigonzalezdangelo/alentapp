@@ -2,6 +2,7 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 import { CreateSportUseCase } from '../application/CreateSportUseCase.js';
 import { GetSportsUseCase } from '../application/GetSportsUseCase.js';
 import { UpdateSportUseCase } from '../application/UpdateSportUseCase.js';
+import { DeleteSportUseCase } from '../application/DeleteSportUseCase.js';
 import { CreateSportRequest, UpdateSportRequest} from '@alentapp/shared';
 
 type RawUpdateSportRequest = UpdateSportRequest & {
@@ -13,6 +14,7 @@ export class SportController {
         private readonly createSportUseCase: CreateSportUseCase,
         private readonly getSportsUseCase: GetSportsUseCase,
         private readonly updateSportUseCase: UpdateSportUseCase,
+        private readonly deleteSportUseCase: DeleteSportUseCase,
     ) {}
 
     async getAll(_request: FastifyRequest, reply: FastifyReply) {
@@ -77,6 +79,19 @@ export class SportController {
                 return reply.status(400).send({ error: error.message });
             }
 
+            return reply.status(500).send({ error: 'Error interno, reintente más tarde' });
+        }
+    }
+
+    async delete(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+        try {
+            const { id } = request.params;
+            await this.deleteSportUseCase.execute(id);
+            return reply.status(200).send({ message: 'Deporte eliminado correctamente' });
+        } catch (error: any) {
+            if (error.message.includes('no existe') || error.message.includes('ya fue dado de baja')) {
+                return reply.status(404).send({ error: error.message });
+            }
             return reply.status(500).send({ error: 'Error interno, reintente más tarde' });
         }
     }
