@@ -79,13 +79,22 @@ async update(id: string, data: any): Promise<LockerDTO> {
     data: {
         status: data.status,
         member_id: data.member_id,
-        contract_end_date: data.contract_end_date
-        ? new Date(data.contract_end_date)
-        : null,
+        contract_end_date:
+            data.contract_end_date !== undefined
+                ? data.contract_end_date
+                ? new Date(data.contract_end_date)
+                : null
+            : undefined,
     },
     });
 
     return this.mapToDTO(locker);
+}
+
+    async delete(id: string): Promise<void> {
+    await prisma.locker.delete({
+    where: { id },
+});
 }
 
     private mapToDTO(locker: DBLocker): LockerDTO {
