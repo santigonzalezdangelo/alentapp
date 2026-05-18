@@ -13,6 +13,7 @@ Input,
 } from "@chakra-ui/react";
 
 import { LuPlus, LuRefreshCw, LuPencil } from "react-icons/lu";
+import { LuTrash } from "react-icons/lu";
 import { useEffect, useState } from "react";
 
 import { lockersService } from "../services/lockers";
@@ -154,6 +155,21 @@ const handleUpdate = async (e: React.FormEvent) => {
     }
 };
 
+const handleDelete = async (id: string) => {
+  const confirmDelete = confirm(
+    "¿Seguro que desea eliminar el locker?"
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+    await lockersService.delete(id);
+    fetchLockers();
+  } catch (err: any) {
+    alert(err.message);
+  }
+};
+
   const openEdit = (locker: LockerDTO) => {
     setSelectedLocker(locker);
     setUpdateData({
@@ -205,14 +221,39 @@ const handleUpdate = async (e: React.FormEvent) => {
             <Table.Body>
               {lockers.map((l) => (
                 <Table.Row key={l.id}>
-                  <Table.Cell>{l.number}</Table.Cell>
-                  <Table.Cell>{l.status}</Table.Cell>
-                  <Table.Cell>{l.member_id ?? "-"}</Table.Cell>
                   <Table.Cell>
-                    <Button size="sm" onClick={() => openEdit(l)}>
-                      <LuPencil />
-                    </Button>
+                    {l.number}
                   </Table.Cell>
+
+                  <Table.Cell>
+                    {l.status}
+                  </Table.Cell>
+
+                  <Table.Cell>
+                    {l.member_id ?? "-"}
+                  </Table.Cell>
+
+                  <Table.Cell>
+                    <HStack>
+
+                      <Button
+                        size="sm"
+                        onClick={() => openEdit(l)}
+                      >
+                        <LuPencil />
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        colorPalette="red"
+                        onClick={() => handleDelete(l.id)}
+                      >
+                        <LuTrash />
+                      </Button>
+
+                    </HStack>
+                  </Table.Cell>
+
                 </Table.Row>
               ))}
             </Table.Body>
