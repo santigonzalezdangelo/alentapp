@@ -59,6 +59,18 @@ function Layout() {
                                 Certificados Médicos
                             </Text>
                         </RouterLink>
+                        <RouterLink to="/lockers">
+                            <Text
+                                fontWeight="semibold"
+                                fontSize="sm"
+                                textTransform="uppercase"
+                                letterSpacing="wider"
+                                color="fg.muted"
+                                _hover={{ color: "blue.500", textDecoration: "none" }}
+                            >
+                                Lockers
+                            </Text>
+                        </RouterLink>
                     </HStack>
                 </Flex>
             </Box>
