@@ -11,17 +11,18 @@ function Layout() {
             <Box as="nav" borderBottomWidth="1px" py="4" px="8" bg="bg.panel" boxShadow="sm" position="sticky" top="0" zIndex="docked">
                 <Flex justify="space-between" align="center" maxW="7xl" mx="auto">
                     <RouterLink to="/">
-                        <Text 
-                            fontSize="2xl" 
-                            fontWeight="bold" 
-                            bgGradient="to-r" 
-                            gradientFrom="blue.600" 
-                            gradientTo="cyan.500" 
+                        <Text
+                            fontSize="2xl"
+                            fontWeight="bold"
+                            bgGradient="to-r"
+                            gradientFrom="blue.600"
+                            gradientTo="cyan.500"
                             bgClip="text"
                         >
                             Alentapp
                         </Text>
                     </RouterLink>
+
                     <HStack gap="10">
                         <RouterLink to="/members">
                             <Text
@@ -35,11 +36,12 @@ function Layout() {
                                 Miembros
                             </Text>
                         </RouterLink>
+
                         <RouterLink to="/payments">
-                            <Text 
-                                fontWeight="semibold" 
-                                fontSize="sm" 
-                                textTransform="uppercase" 
+                            <Text
+                                fontWeight="semibold"
+                                fontSize="sm"
+                                textTransform="uppercase"
                                 letterSpacing="wider"
                                 color="fg.muted"
                                 _hover={{ color: "blue.500", textDecoration: "none" }}
@@ -47,6 +49,7 @@ function Layout() {
                                 Pagos
                             </Text>
                         </RouterLink>
+
                         <RouterLink to="/medical-certificates">
                             <Text
                                 fontWeight="semibold"
@@ -59,8 +62,9 @@ function Layout() {
                                 Certificados Médicos
                             </Text>
                         </RouterLink>
-                        <RouterLink to="/sports">
-                        <Text
+
+                        <RouterLink to="/lockers">
+                            <Text
                                 fontWeight="semibold"
                                 fontSize="sm"
                                 textTransform="uppercase"
@@ -68,10 +72,11 @@ function Layout() {
                                 color="fg.muted"
                                 _hover={{ color: "blue.500", textDecoration: "none" }}
                             >
-                                Deporte
+                                Lockers
                             </Text>
-                            </RouterLink>
-                        <RouterLink to="/disciplines">
+                        </RouterLink>
+
+                        <RouterLink to="/sports">
                             <Text
                                 fontWeight="semibold"
                                 fontSize="sm"
@@ -81,16 +86,30 @@ function Layout() {
                                 _hover={{ color: "blue.500", textDecoration: "none" }}
                             >
                                 Deportes
+                            </Text>
+                        </RouterLink>
+
+                        <RouterLink to="/disciplines">
+                            <Text
+                                fontWeight="semibold"
+                                fontSize="sm"
+                                textTransform="uppercase"
+                                letterSpacing="wider"
+                                color="fg.muted"
+                                _hover={{ color: "blue.500", textDecoration: "none" }}
+                            >
                                 Sanciones
                             </Text>
                         </RouterLink>
                     </HStack>
                 </Flex>
             </Box>
+
             <Container maxW="7xl" py="10">
                 <Outlet />
             </Container>
         </Provider>
     );
 }
+
 export default Layout;
