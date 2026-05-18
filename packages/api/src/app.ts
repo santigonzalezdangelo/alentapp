@@ -42,6 +42,7 @@ import { CreateLockerUseCase } from './application/CreateLockerUseCase.js';
 import { LockerController } from './delivery/LockerController.js';
 import { GetLockersUseCase } from './application/GetLockersUseCase.js';
 import { UpdateLockerUseCase } from './application/UpdateLockerUseCase.js';
+import { DeleteLockerUseCase } from './application/DeleteLockerUseCase.js';
 
 
 export function buildApp() {
@@ -97,10 +98,16 @@ export function buildApp() {
     lockerRepo,
     memberRepo
 );
+
+const deleteLockerUseCase = new DeleteLockerUseCase(
+lockerRepo
+);
+
     const lockerController = new LockerController(
     createLockerUseCase,
     getLockersUseCase,
-    updateLockerUseCase
+    updateLockerUseCase,
+    deleteLockerUseCase
 );
 
 
@@ -170,6 +177,7 @@ export function buildApp() {
     server.post('/api/v1/lockers', lockerController.create.bind(lockerController));
     server.get('/api/v1/lockers', lockerController.getAll.bind(lockerController));
     server.patch('/api/v1/lockers/:id', lockerController.update.bind(lockerController));
+    server.delete('/api/v1/lockers/:id', lockerController.delete.bind(lockerController));
 
     server.get('/api/v1/medical-certificates', medicalCertificateController.getAll.bind(medicalCertificateController));
     server.post('/api/v1/medical-certificates', medicalCertificateController.create.bind(medicalCertificateController));
