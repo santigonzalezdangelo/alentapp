@@ -13,6 +13,7 @@ interface PaymentItemProps {
 
 export function PaymentItem({ payment, onUpdate, onEdit }: PaymentItemProps) {
   const [loadingPay, setLoadingPay] = useState(false);
+  const [loadingCancel, setLoadingCancel] = useState(false);
 
   const handlePay = async () => {
     setLoadingPay(true);
@@ -35,19 +36,48 @@ export function PaymentItem({ payment, onUpdate, onEdit }: PaymentItemProps) {
     }
   };
 
+  const handleCancel = async () => {
+    setLoadingCancel(true);
+    try {
+      const updated = await paymentsService.cancel(payment.id);
+      onUpdate(updated);
+      toaster.create({
+        title: 'Anulación exitosa',
+        description: 'La cuota ha sido anulada.',
+        type: 'info',
+      });
+    } catch (error: any) {
+      toaster.create({
+        title: 'Error al anular',
+        description: error?.message || 'Ocurrió un error inesperado',
+        type: 'error',
+      });
+    } finally {
+      setLoadingCancel(false);
+    }
+  };
+
   const colorPalette =
     payment.status === 'Pagado' ? 'green' :
     payment.status === 'Cancelado' ? 'red' :
     'yellow';
 
   const isPending = payment.status === 'Pendiente';
+  const anyLoading = loadingPay || loadingCancel;
 
   const amountFormatted = new Intl.NumberFormat('es-AR', {
     style: 'currency',
     currency: 'ARS',
   }).format(payment.amount);
 
-  const dueDateFormatted = new Date(payment.due_date).toLocaleDateString('es-AR');
+const formatDateOnly = (isoString: string): string => {
+  // Toma solo la parte YYYY-MM-DD, ignora la hora y el timezone
+  const datePart = isoString.split('T')[0];
+  const [year, month, day] = datePart.split('-');
+  return `${parseInt(day)}/${parseInt(month)}/${year}`;
+};
+
+const dueDateFormatted = formatDateOnly(payment.due_date);
   const paymentDateFormatted = payment.payment_date
     ? new Date(payment.payment_date).toLocaleDateString('es-AR')
     : null;
@@ -79,7 +109,7 @@ export function PaymentItem({ payment, onUpdate, onEdit }: PaymentItemProps) {
                 variant="ghost"
                 size="sm"
                 onClick={() => onEdit(payment)}
-                disabled={loadingPay}
+                disabled={anyLoading}
               >
                 <LuPencil /> Editar
               </Button>
@@ -88,8 +118,19 @@ export function PaymentItem({ payment, onUpdate, onEdit }: PaymentItemProps) {
                 size="sm"
                 onClick={handlePay}
                 loading={loadingPay}
+                disabled={loadingCancel}
               >
                 Cobrar
+              </Button>
+              <Button
+                colorPalette="red"
+                variant="outline"
+                size="sm"
+                onClick={handleCancel}
+                loading={loadingCancel}
+                disabled={loadingPay}
+              >
+                Anular
               </Button>
             </>
           )}

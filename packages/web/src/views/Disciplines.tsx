@@ -12,7 +12,7 @@ import {
   Input,
   IconButton
 } from "@chakra-ui/react";
-import { LuPlus, LuRefreshCw, LuPencil } from "react-icons/lu";
+import { LuPlus, LuRefreshCw, LuPencil, LuTrash2 } from "react-icons/lu";
 import { useEffect, useState } from "react";
 import { disciplinesService } from "../services/disciplines";
 import { membersService } from "../services/members";
@@ -55,7 +55,7 @@ export function DisciplinesView() {
   });
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("es-AR");
+    return date.split("T")[0].split("-").reverse().join("/");
   };
 
   const fetchDisciplines = async () => {
@@ -147,6 +147,21 @@ export function DisciplinesView() {
       alert(err.message || "Error al guardar la sanción");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (discipline: DisciplineDTO) => {
+    const confirmed = window.confirm(
+      `¿Seguro que querés eliminar la sanción "${discipline.reason}"?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await disciplinesService.delete(discipline.id);
+      await fetchDisciplines();
+    } catch (err: any) {
+      alert(err.message || "Error al eliminar la sanción");
     }
   };
 
@@ -347,6 +362,15 @@ export function DisciplinesView() {
                       onClick={() => openEditModal(discipline)}
                     >
                       <LuPencil />
+                    </IconButton>
+                    <IconButton
+                      variant="ghost"
+                      size="sm"
+                      colorPalette="red" 
+                      aria-label="Eliminar sanción"
+                      onClick={() => handleDelete(discipline)}
+                    >
+                      <LuTrash2 />
                     </IconButton>
                   </Table.Cell>
                 </Table.Row>

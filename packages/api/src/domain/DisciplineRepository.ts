@@ -5,4 +5,5 @@ export interface DisciplineRepository {
     findAll(): Promise<DisciplineDTO[]>;
     findById(id: string): Promise<DisciplineDTO | null>;
     update(id: string, data: UpdateDisciplineRequest): Promise<DisciplineDTO>;
+    softDelete(id: string): Promise<void>;
 }

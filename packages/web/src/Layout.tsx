@@ -22,6 +22,7 @@ function Layout() {
                             Alentapp
                         </Text>
                     </RouterLink>
+
                     <HStack gap="10">
                         <RouterLink to="/members">
                             <Text
@@ -35,6 +36,7 @@ function Layout() {
                                 Miembros
                             </Text>
                         </RouterLink>
+
                         <RouterLink to="/payments">
                             <Text 
                                 fontWeight="semibold" 
@@ -47,6 +49,7 @@ function Layout() {
                                 Pagos
                             </Text>
                         </RouterLink>
+
                         <RouterLink to="/medical-certificates">
                             <Text
                                 fontWeight="semibold"
@@ -59,6 +62,7 @@ function Layout() {
                                 Certificados Médicos
                             </Text>
                         </RouterLink>
+
                         <RouterLink to="/lockers">
                             <Text
                                 fontWeight="semibold"
@@ -71,13 +75,28 @@ function Layout() {
                                 Lockers
                             </Text>
                         </RouterLink>
+
+                        <RouterLink to="/disciplines">
+                            <Text
+                                fontWeight="semibold"
+                                fontSize="sm"
+                                textTransform="uppercase"
+                                letterSpacing="wider"
+                                color="fg.muted"
+                                _hover={{ color: "blue.500", textDecoration: "none" }}
+                            >
+                                Sanciones
+                            </Text>
+                        </RouterLink>
                     </HStack>
                 </Flex>
             </Box>
+
             <Container maxW="7xl" py="10">
                 <Outlet />
             </Container>
         </Provider>
     );
 }
+
 export default Layout;

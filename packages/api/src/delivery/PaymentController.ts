@@ -8,6 +8,7 @@ import {
 import { GetPaymentsUseCase } from '../application/GetPaymentsUseCase.js';
 import { MarkPaymentAsPaidUseCase } from '../application/MarkPaymentAsPaidUseCase.js';
 import { UpdatePaymentUseCase } from '../application/UpdatePaymentUseCase.js';
+import { CancelPaymentUseCase } from '../application/CancelPaymentUseCase.js';
 import { PaymentNotPendingError } from '../domain/PaymentRepository.js';
 import { CreatePaymentRequest, UpdatePaymentRequest } from '@alentapp/shared';
 
@@ -17,6 +18,7 @@ export class PaymentController {
         private readonly getPaymentsUseCase: GetPaymentsUseCase,
         private readonly markPaidUseCase: MarkPaymentAsPaidUseCase,
         private readonly updateUseCase: UpdatePaymentUseCase,
+        private readonly cancelUseCase: CancelPaymentUseCase,
     ) {}
 
     async getAll(
@@ -67,6 +69,18 @@ export class PaymentController {
                 request.params.id,
                 request.body,
             );
+            return reply.status(200).send({ data: payment });
+        } catch (error) {
+            return this.handleError(error, reply, request);
+        }
+    }
+
+    async cancel(
+        request: FastifyRequest<{ Params: { id: string } }>,
+        reply: FastifyReply,
+    ) {
+        try {
+            const payment = await this.cancelUseCase.execute(request.params.id);
             return reply.status(200).send({ data: payment });
         } catch (error) {
             return this.handleError(error, reply, request);

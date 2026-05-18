@@ -3,12 +3,14 @@ import { CreateDisciplineUseCase } from '../application/CreateDisciplineUseCase.
 import { CreateDisciplineRequest, UpdateDisciplineRequest } from '@alentapp/shared';
 import { GetDisciplinesUseCase } from '../application/GetDisciplinesUseCase.js';
 import { UpdateDisciplineUseCase } from '../application/UpdateDisciplineUseCase.js';
+import { DeleteDisciplineUseCase } from '../application/DeleteDisciplineUseCase.js';
 
 export class DisciplineController {
     constructor(
         private readonly createDisciplineUseCase: CreateDisciplineUseCase,
         private readonly getDisciplinesUseCase: GetDisciplinesUseCase,
         private readonly updateDisciplineUseCase: UpdateDisciplineUseCase,
+        private readonly deleteDisciplineUseCase: DeleteDisciplineUseCase,
     ) {}
     async create(
         request: FastifyRequest<{ Body: CreateDisciplineRequest }>,
@@ -74,6 +76,30 @@ export class DisciplineController {
             }
 
             return reply.status(500).send({ message: "Error interno, reintente más tarde" });
+        }
+    }
+    async delete(
+        request: FastifyRequest<{ Params: { id: string } }>,
+        reply: FastifyReply,
+    ) {
+        try {
+            const { id } = request.params;
+            await this.deleteDisciplineUseCase.execute(id);
+            return reply.status(204).send();
+        } catch (error: any) {
+            if (error.message.includes('Formato de ID inválido')) {
+                return reply.status(400).send({ message: error.message });
+            }
+
+            if (error.message.includes('La sanción no existe')) {
+                return reply.status(404).send({ message: error.message });
+            }
+
+            if (error.message.includes('La sanción ya fue eliminada')) {
+                return reply.status(409).send({ message: error.message });
+            }
+
+            return reply.status(500).send({ message: 'Error interno, reintente más tarde' });
         }
     }
 }

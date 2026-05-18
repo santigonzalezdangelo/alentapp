@@ -62,5 +62,24 @@ export const disciplinesService = {
 
         const result = await response.json();
         return result.data;
+    },
+
+    async delete(id: string): Promise<void> {
+        const response = await fetch(`${API_URL}/disciplines/${id}`, {
+            method: "DELETE",
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+
+            const errorMessage =
+                errorData?.error ||
+                errorData?.message ||
+                errorData?.details ||
+                errorData?.errors?.[0]?.message ||
+                "Error al eliminar la sanción";
+
+            throw new Error(errorMessage);
+        }
     }
 };
