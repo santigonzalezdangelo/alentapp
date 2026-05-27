@@ -12,6 +12,7 @@ import { DeleteMemberUseCase } from './application/DeleteMemberUseCase.js';
 import { CreateMedicalCertificateUseCase } from './application/CreateMedicalCertificateUseCase.js';
 import { GetMedicalCertificatesUseCase } from './application/GetMedicalCertificatesUseCase.js';
 import { UpdateMedicalCertificateUseCase } from './application/UpdateMedicalCertificateUseCase.js';
+import { DeleteMedicalCertificateUseCase } from './application/DeleteMedicalCertificateUseCase.js';
 
 import { MemberController } from './delivery/MemberController.js';
 import { MedicalCertificateController } from './delivery/MedicalCertificateController.js';
@@ -99,6 +100,7 @@ export function buildApp() {
         medicalCertificateRepo,
         medicalCertificateValidator,
     );
+    const deleteMedicalCertificateUseCase = new DeleteMedicalCertificateUseCase(medicalCertificateRepo);
 
     const memberController = new MemberController(
         createMemberUseCase,
@@ -133,6 +135,7 @@ lockerRepo
         createMedicalCertificateUseCase,
         getMedicalCertificatesUseCase,
         updateMedicalCertificateUseCase,
+        deleteMedicalCertificateUseCase,
     );
 
     // ============================================================
@@ -213,6 +216,7 @@ lockerRepo
     server.get('/api/v1/medical-certificates', medicalCertificateController.getAll.bind(medicalCertificateController));
     server.post('/api/v1/medical-certificates', medicalCertificateController.create.bind(medicalCertificateController));
     server.patch('/api/v1/medical-certificates/:id', medicalCertificateController.update.bind(medicalCertificateController));
+    server.delete('/api/v1/medical-certificates/:id', medicalCertificateController.delete.bind(medicalCertificateController));
 
     server.post('/api/v1/disciplines', disciplineController.create.bind(disciplineController));
     server.get('/api/v1/disciplines', disciplineController.getAll.bind(disciplineController));
