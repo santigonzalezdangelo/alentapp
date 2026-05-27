@@ -6,4 +6,5 @@ export interface MedicalCertificateRepository {
   findById(id: string): Promise<MedicalCertificateResponseDTO | null>;
   update(id: string, data: UpdateMedicalCertificateRequest): Promise<MedicalCertificateResponseDTO>;
   updateStatusToValidated(certificateId: string, memberId: string): Promise<MedicalCertificateResponseDTO>;
+  softDelete(id: string): Promise<void>;
 }
