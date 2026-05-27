@@ -11,7 +11,7 @@ import {
   Center,
   IconButton,
 } from "@chakra-ui/react";
-import { LuPlus, LuRefreshCw, LuPencil } from "react-icons/lu";
+import { LuPlus, LuRefreshCw, LuPencil, LuTrash2 } from "react-icons/lu";
 import { useEffect, useState, useRef } from "react";
 import { medicalCertificatesService } from "../services/medicalCertificates";
 import { membersService } from "../services/members";
@@ -91,6 +91,17 @@ export function MedicalCertificatesView() {
     setEditingCertificateId(null);
     setEditingInitialData(undefined);
     setSubmitError(null);
+  };
+
+  const handleDelete = async (cert: MedicalCertificateListItem) => {
+    if (window.confirm(`¿Seguro que querés eliminar el certificado médico del socio con DNI ${cert.member_dni}?`)) {
+      try {
+        await medicalCertificatesService.delete(cert.id);
+        fetchCertificates();
+      } catch (err: any) {
+        alert(err.message || "Error al eliminar el certificado médico");
+      }
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -275,6 +286,17 @@ export function MedicalCertificatesView() {
                           onClick={() => openEditModal(cert)}
                         >
                           <LuPencil />
+                        </IconButton>
+                        <IconButton
+                          variant="ghost"
+                          size="sm"
+                          colorPalette="red"
+                          aria-label="Eliminar certificado"
+                          disabled={cert.status === 'historical'}
+                          title="No se puede eliminar un certificado histórico"
+                          onClick={() => handleDelete(cert)}
+                        >
+                          <LuTrash2 />
                         </IconButton>
                       </Table.Cell>
                     </Table.Row>
