@@ -87,9 +87,6 @@ export class DisciplineController {
             await this.deleteDisciplineUseCase.execute(id);
             return reply.status(204).send();
         } catch (error: any) {
-            if (error.message.includes('Formato de ID inválido')) {
-                return reply.status(400).send({ message: error.message });
-            }
 
             if (error.message.includes('La sanción no existe')) {
                 return reply.status(404).send({ message: error.message });
