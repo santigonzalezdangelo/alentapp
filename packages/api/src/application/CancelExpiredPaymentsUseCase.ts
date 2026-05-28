@@ -14,7 +14,7 @@ export interface JobRunResult {
     failed: number;
 }
 
-export class CancelExpiredPaymentUseCase {
+export class CancelExpiredPaymentsUseCase {
     constructor(
         private readonly paymentRepo: PaymentRepository,
         private readonly cancelUseCase: CancelPaymentUseCase,
@@ -68,7 +68,7 @@ export class CancelExpiredPaymentUseCase {
 
 function consoleLogger(): JobLogger {
     return {
-        info: (msg, meta) => console.log(`[CancelExpiredPaymentUseCase] ${msg}`, meta ?? ''),
-        error: (msg, meta) => console.error(`[CancelExpiredPaymentUseCase] ${msg}`, meta ?? ''),
+        info: (msg, meta) => console.log(`[CancelExpiredPaymentsUseCase] ${msg}`, meta ?? ''),
+        error: (msg, meta) => console.error(`[CancelExpiredPaymentsUseCase] ${msg}`, meta ?? ''),
     };
 }
