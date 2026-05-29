@@ -130,7 +130,7 @@ contract_end_date DateTime?
 9. Actualizar automáticamente el estado a `OCCUPIED` cuando se asigne un socio.
 10. Permitir cambiar un locker ocupado a estado `MAINTENANCE`.
 11. Permitir liberar lockers ocupados eliminando `member_id` y `contract_end_date`.
-12. Actualizar automáticamente el estado a `AVAILABLE` cuando un locker sea liberado.
+12. Actualizar automáticamente el estado a `AVAILABLE` cuando un locker sea liberado, excepto si el locker se encuentra en estado MAINTENANCE, en cuyo caso conserva dicho estado.
 13. Persistir los cambios a través de `LockerRepository`.
 14. Retornar el locker actualizado.
 
@@ -174,3 +174,4 @@ contract_end_date DateTime?
 * El sistema debe permitir pasar un locker de estado `OCCUPIED` a `MAINTENANCE`.
 * Cuando un locker pase a estado `MAINTENANCE`, el sistema no debe reasignar automáticamente al socio afectado. La reasignación deberá realizarse manualmente por un administrador utilizando otro locker disponible.
 * Cuando un locker se libera, `member_id` y `contract_end_date` deben establecerse automáticamente en `null`.
+* Si un locker se libera mientras se encuentra en estado `MAINTENANCE`, no cambia a `AVAILABLE`. Para pasar un locker de estado `MAINTENANCE` a `AVAILABLE`, el cambio debe realizarse explícitamente mediante actualización del campo `status`.
