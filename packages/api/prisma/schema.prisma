@@ -39,6 +39,7 @@ model Member {
     category   MemberCategory
     status     MemberStatus   @default(Activo)
     created_at DateTime       @default(now())
+    deleted_at DateTime? 
     certificates MedicalCertificate[]
     payments    Payment[]
     disciplines Discipline[]
