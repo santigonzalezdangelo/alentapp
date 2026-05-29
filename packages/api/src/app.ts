@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import 'dotenv/config';
 
 import { PostgresMemberRepository } from './infrastructure/PostgresMemberRepository.js';
 import { PostgresMedicalCertificateRepository } from './infrastructure/PostgresMedicalCertificateRepository.js';
@@ -115,7 +116,8 @@ export function buildApp() {
     
     const updateLockerUseCase = new UpdateLockerUseCase(
     lockerRepo,
-    memberRepo
+    memberRepo,
+    lockerValidator
 );
 
 const deleteLockerUseCase = new DeleteLockerUseCase(
