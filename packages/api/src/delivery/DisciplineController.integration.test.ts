@@ -7,7 +7,17 @@ vi.mock('../infrastructure/PostgresDisciplineRepository.js', () => {
     return {
         PostgresDisciplineRepository: class {
             async findAll() {
-                return [];
+                return [
+                    {
+                        id: 'discipline-1',
+                        reason: 'Conducta inapropiada',
+                        start_date: '2026-05-01T00:00:00.000Z',
+                        end_date: '2026-05-10T00:00:00.000Z',
+                        is_total_suspension: true,
+                        deleted_at: null,
+                        member_id: 'member-1',
+                    },
+                ];
             }
 
             async findById(id: string) {
@@ -84,6 +94,21 @@ describe('Discipline API Integration Tests', () => {
 
     afterAll(async () => {
         await app.close();
+    });
+
+    describe('GET /api/v1/disciplines', () => {
+        it('debe retornar código 200 y el listado de sanciones', async () => {
+            const response = await app.inject({
+                method: 'GET',
+                url: '/api/v1/disciplines',
+            });
+
+            expect(response.statusCode).toBe(200);
+            const body = JSON.parse(response.payload);
+            expect(body.data).toBeInstanceOf(Array);
+            expect(body.data[0].id).toBe('discipline-1');
+            expect(body.data[0].reason).toBe('Conducta inapropiada');
+        });
     });
 
     describe('POST /api/v1/disciplines', () => {
