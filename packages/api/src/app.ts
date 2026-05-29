@@ -35,10 +35,7 @@ import { GetDisciplinesUseCase } from './application/GetDisciplinesUseCase.js';
 import { UpdateDisciplineUseCase } from './application/UpdateDisciplineUseCase.js';
 import { DeleteDisciplineUseCase } from './application/DeleteDisciplineUseCase.js';
 
-// === Payment imports ===
-// PR 1: crear y listar
-// PR 2: cobrar y editar
-// PR 3: anular
+
 import { PostgresPaymentRepository } from './infrastructure/PostgresPaymentRepository.js';
 import { SystemClock } from './infrastructure/SystemClock.js';
 import { PaymentValidator } from './domain/services/PaymentValidator.js';
@@ -48,6 +45,8 @@ import { MarkPaymentAsPaidUseCase } from './application/MarkPaymentAsPaidUseCase
 import { UpdatePaymentUseCase } from './application/UpdatePaymentUseCase.js';
 import { CancelPaymentUseCase } from './application/CancelPaymentUseCase.js';
 import { PaymentController } from './delivery/PaymentController.js';
+import cron from 'node-cron';
+import { CancelExpiredPaymentsUseCase } from './application/CancelExpiredPaymentsUseCase.js';
 
 import { PostgresLockerRepository } from './infrastructure/PostgresLockerRepository.js';
 import { LockerValidator } from './domain/services/LockerValidator.js';
@@ -175,31 +174,47 @@ lockerRepo
     );
 
     // ============================================================
-    // Payments
-    // ============================================================
-    const clock = new SystemClock();
-    const paymentRepo = new PostgresPaymentRepository();
-    const paymentValidator = new PaymentValidator(clock);
+// Payments
+// ============================================================
+const clock = new SystemClock();
+const paymentRepo = new PostgresPaymentRepository();
+const paymentValidator = new PaymentValidator(clock);
 
-    const newPaymentUseCase = new NewPaymentUseCase(
-        paymentRepo,
-        memberRepo,
-        paymentValidator,
-        clock,
-    );
-    const getPaymentsUseCase = new GetPaymentsUseCase(paymentRepo, paymentValidator);
-    const markPaymentAsPaidUseCase = new MarkPaymentAsPaidUseCase(paymentRepo, clock);
-    const updatePaymentUseCase = new UpdatePaymentUseCase(paymentRepo, paymentValidator);
-    const cancelPaymentUseCase = new CancelPaymentUseCase(paymentRepo, clock);
+const newPaymentUseCase = new NewPaymentUseCase(
+    paymentRepo,
+    memberRepo,
+    paymentValidator,
+    clock,
+);
+const getPaymentsUseCase = new GetPaymentsUseCase(paymentRepo, paymentValidator);
+const markPaymentAsPaidUseCase = new MarkPaymentAsPaidUseCase(paymentRepo, clock);
+const updatePaymentUseCase = new UpdatePaymentUseCase(paymentRepo, paymentValidator);
+const cancelPaymentUseCase = new CancelPaymentUseCase(paymentRepo, clock);
 
-    const paymentController = new PaymentController(
-        newPaymentUseCase,
-        getPaymentsUseCase,
-        markPaymentAsPaidUseCase,
-        updatePaymentUseCase,
-        cancelPaymentUseCase,
-    );
+const paymentController = new PaymentController(
+    newPaymentUseCase,
+    getPaymentsUseCase,
+    markPaymentAsPaidUseCase,
+    updatePaymentUseCase,
+    cancelPaymentUseCase,
+);
 
+// ============================================================
+// Cancelación automática de pagos vencidos (TDD-0018)
+// ============================================================
+const cancelExpiredPaymentsUseCase = new CancelExpiredPaymentsUseCase(
+    paymentRepo,
+    cancelPaymentUseCase,
+    clock,
+);
+
+// Schedule: todos los días a las 00:30 hs
+cron.schedule('30 0 * * *', () => {
+    cancelExpiredPaymentsUseCase.execute().catch((err) => {
+        server.log.error({ err }, 'Error ejecutando CancelExpiredPaymentUseCase');
+    });
+});
+// ============================================================
     // ============================================================
     // Routes
     // ============================================================
