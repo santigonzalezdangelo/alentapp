@@ -13,14 +13,18 @@ import { DeleteMemberUseCase } from './application/DeleteMemberUseCase.js';
 import { CreateMedicalCertificateUseCase } from './application/CreateMedicalCertificateUseCase.js';
 import { GetMedicalCertificatesUseCase } from './application/GetMedicalCertificatesUseCase.js';
 import { UpdateMedicalCertificateUseCase } from './application/UpdateMedicalCertificateUseCase.js';
+import { DeleteMedicalCertificateUseCase } from './application/DeleteMedicalCertificateUseCase.js';
 
 import { MemberController } from './delivery/MemberController.js';
 import { MedicalCertificateController } from './delivery/MedicalCertificateController.js';
+
+
 import { PostgresSportRepository } from './infrastructure/PostgresSportRepository.js';
 import { SportValidator } from './domain/services/SportValidator.js';
 import { CreateSportUseCase } from './application/CreateSportUseCase.js';
 import { GetSportsUseCase } from './application/GetSportsUseCase.js';
 import { UpdateSportUseCase } from './application/UpdateSportUseCase.js';
+import { DeleteSportUseCase } from './application/DeleteSportUseCase.js';
 import { SportController } from './delivery/SportController.js';
 
 
@@ -32,10 +36,7 @@ import { GetDisciplinesUseCase } from './application/GetDisciplinesUseCase.js';
 import { UpdateDisciplineUseCase } from './application/UpdateDisciplineUseCase.js';
 import { DeleteDisciplineUseCase } from './application/DeleteDisciplineUseCase.js';
 
-// === Payment imports ===
-// PR 1: crear y listar
-// PR 2: cobrar y editar
-// PR 3: anular
+
 import { PostgresPaymentRepository } from './infrastructure/PostgresPaymentRepository.js';
 import { SystemClock } from './infrastructure/SystemClock.js';
 import { PaymentValidator } from './domain/services/PaymentValidator.js';
@@ -45,6 +46,8 @@ import { MarkPaymentAsPaidUseCase } from './application/MarkPaymentAsPaidUseCase
 import { UpdatePaymentUseCase } from './application/UpdatePaymentUseCase.js';
 import { CancelPaymentUseCase } from './application/CancelPaymentUseCase.js';
 import { PaymentController } from './delivery/PaymentController.js';
+import cron from 'node-cron';
+import { CancelExpiredPaymentsUseCase } from './application/CancelExpiredPaymentsUseCase.js';
 
 import { PostgresLockerRepository } from './infrastructure/PostgresLockerRepository.js';
 import { LockerValidator } from './domain/services/LockerValidator.js';
@@ -97,6 +100,7 @@ export function buildApp() {
         medicalCertificateRepo,
         medicalCertificateValidator,
     );
+    const deleteMedicalCertificateUseCase = new DeleteMedicalCertificateUseCase(medicalCertificateRepo);
 
     const memberController = new MemberController(
         createMemberUseCase,
@@ -132,6 +136,7 @@ lockerRepo
         createMedicalCertificateUseCase,
         getMedicalCertificatesUseCase,
         updateMedicalCertificateUseCase,
+        deleteMedicalCertificateUseCase,
     );
 
     // ============================================================
@@ -159,40 +164,59 @@ lockerRepo
 
     const createSportUseCase = new CreateSportUseCase(sportRepo, sportValidator);
     const getSportsUseCase = new GetSportsUseCase(sportRepo);
-    const updateSportUseCase = new UpdateSportUseCase(sportRepo, sportValidator);
+    const updateSportUseCase = new UpdateSportUseCase(sportRepo, sportValidator,);
+    const deleteSportUseCase = new DeleteSportUseCase(sportRepo);
 
+    
     const sportController = new SportController(
         createSportUseCase,
         getSportsUseCase,
         updateSportUseCase,
+        deleteSportUseCase,
     );
 
     // ============================================================
-    // Payments
-    // ============================================================
-    const clock = new SystemClock();
-    const paymentRepo = new PostgresPaymentRepository();
-    const paymentValidator = new PaymentValidator(clock);
+// Payments
+// ============================================================
+const clock = new SystemClock();
+const paymentRepo = new PostgresPaymentRepository();
+const paymentValidator = new PaymentValidator(clock);
 
-    const newPaymentUseCase = new NewPaymentUseCase(
-        paymentRepo,
-        memberRepo,
-        paymentValidator,
-        clock,
-    );
-    const getPaymentsUseCase = new GetPaymentsUseCase(paymentRepo, paymentValidator);
-    const markPaymentAsPaidUseCase = new MarkPaymentAsPaidUseCase(paymentRepo, clock);
-    const updatePaymentUseCase = new UpdatePaymentUseCase(paymentRepo, paymentValidator);
-    const cancelPaymentUseCase = new CancelPaymentUseCase(paymentRepo, clock);
+const newPaymentUseCase = new NewPaymentUseCase(
+    paymentRepo,
+    memberRepo,
+    paymentValidator,
+    clock,
+);
+const getPaymentsUseCase = new GetPaymentsUseCase(paymentRepo, paymentValidator);
+const markPaymentAsPaidUseCase = new MarkPaymentAsPaidUseCase(paymentRepo, clock);
+const updatePaymentUseCase = new UpdatePaymentUseCase(paymentRepo, paymentValidator);
+const cancelPaymentUseCase = new CancelPaymentUseCase(paymentRepo, clock);
 
-    const paymentController = new PaymentController(
-        newPaymentUseCase,
-        getPaymentsUseCase,
-        markPaymentAsPaidUseCase,
-        updatePaymentUseCase,
-        cancelPaymentUseCase,
-    );
+const paymentController = new PaymentController(
+    newPaymentUseCase,
+    getPaymentsUseCase,
+    markPaymentAsPaidUseCase,
+    updatePaymentUseCase,
+    cancelPaymentUseCase,
+);
 
+// ============================================================
+// Cancelación automática de payments vencidos (TDD-0018)
+// ============================================================
+const cancelExpiredPaymentsUseCase = new CancelExpiredPaymentsUseCase(
+    paymentRepo,
+    cancelPaymentUseCase,
+    clock,
+);
+
+// Schedule: todos los días a las 00:30 hs
+cron.schedule('30 0 * * *', () => {
+    cancelExpiredPaymentsUseCase.execute().catch((err) => {
+        server.log.error({ err }, 'Error ejecutando CancelExpiredPaymentUseCase');
+    });
+});
+// ============================================================
     // ============================================================
     // Routes
     // ============================================================
@@ -209,6 +233,7 @@ lockerRepo
     server.get('/api/v1/medical-certificates', medicalCertificateController.getAll.bind(medicalCertificateController));
     server.post('/api/v1/medical-certificates', medicalCertificateController.create.bind(medicalCertificateController));
     server.patch('/api/v1/medical-certificates/:id', medicalCertificateController.update.bind(medicalCertificateController));
+    server.delete('/api/v1/medical-certificates/:id', medicalCertificateController.delete.bind(medicalCertificateController));
 
     server.post('/api/v1/disciplines', disciplineController.create.bind(disciplineController));
     server.get('/api/v1/disciplines', disciplineController.getAll.bind(disciplineController));
@@ -218,12 +243,13 @@ lockerRepo
     server.get('/api/v1/sports', sportController.getAll.bind(sportController));
     server.post('/api/v1/sports', sportController.create.bind(sportController));
     server.patch('/api/v1/sports/:id', sportController.update.bind(sportController));
+    server.delete('/api/v1/sports/:id', sportController.delete.bind(sportController));
 
-    server.get('/api/v1/pagos', paymentController.getAll.bind(paymentController));
-    server.post('/api/v1/pagos', paymentController.create.bind(paymentController));
-    server.patch('/api/v1/pagos/:id', paymentController.update.bind(paymentController));
-    server.patch('/api/v1/pagos/:id/pay', paymentController.pay.bind(paymentController));
-    server.patch('/api/v1/pagos/:id/cancel', paymentController.cancel.bind(paymentController));
+    server.get('/api/v1/payments', paymentController.getAll.bind(paymentController));
+    server.post('/api/v1/payments', paymentController.create.bind(paymentController));
+    server.patch('/api/v1/payments/:id', paymentController.update.bind(paymentController));
+    server.patch('/api/v1/payments/:id/pay', paymentController.pay.bind(paymentController));
+    server.patch('/api/v1/payments/:id/cancel', paymentController.cancel.bind(paymentController));
 
     server.get('/', async (req, rep) => {
         rep.status(200).send({ msg: 'asd' });

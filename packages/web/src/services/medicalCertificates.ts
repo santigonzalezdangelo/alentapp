@@ -43,4 +43,23 @@ export const medicalCertificatesService = {
     const result = await response.json();
     return result.data;
   },
+
+  async delete(id: string): Promise<void> {
+    const response = await fetch(`${API_URL}/medical-certificates/${id}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+
+      const errorMessage =
+        errorData?.error ||
+        errorData?.message ||
+        errorData?.details ||
+        errorData?.errors?.[0]?.message ||
+        'Error al eliminar el certificado médico';
+
+      throw new Error(errorMessage);
+    }
+  },
 };

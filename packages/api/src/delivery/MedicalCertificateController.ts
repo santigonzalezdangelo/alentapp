@@ -2,6 +2,7 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import { CreateMedicalCertificateUseCase } from '../application/CreateMedicalCertificateUseCase.js';
 import { GetMedicalCertificatesUseCase } from '../application/GetMedicalCertificatesUseCase.js';
 import { UpdateMedicalCertificateUseCase } from '../application/UpdateMedicalCertificateUseCase.js';
+import { DeleteMedicalCertificateUseCase } from '../application/DeleteMedicalCertificateUseCase.js';
 import { CreateMedicalCertificateRequest, UpdateMedicalCertificateRequest } from '@alentapp/shared';
 
 export class MedicalCertificateController {
@@ -9,6 +10,7 @@ export class MedicalCertificateController {
         private readonly createMedicalCertificateUseCase: CreateMedicalCertificateUseCase,
         private readonly getMedicalCertificatesUseCase: GetMedicalCertificatesUseCase,
         private readonly updateMedicalCertificateUseCase: UpdateMedicalCertificateUseCase,
+        private readonly deleteMedicalCertificateUseCase: DeleteMedicalCertificateUseCase,
     ) {}
 
     async getAll(_request: FastifyRequest, reply: FastifyReply) {
@@ -69,6 +71,35 @@ export class MedicalCertificateController {
                 error.message.includes('Formato')
             ) {
                 return reply.status(400).send({ error: error.message });
+            }
+
+            return reply.status(500).send({ error: 'Error interno, reintente más tarde' });
+        }
+    }
+
+    async delete(
+        request: FastifyRequest<{ Params: { id: string } }>,
+        reply: FastifyReply,
+    ) {
+        try {
+            const { id } = request.params;
+            await this.deleteMedicalCertificateUseCase.execute(id);
+            return reply.status(204).send();
+        } catch (error: any) {
+            if (error.message.includes('Formato de ID inválido')) {
+                return reply.status(400).send({ error: error.message });
+            }
+
+            if (error.message.includes('no existe')) {
+                return reply.status(404).send({ error: error.message });
+            }
+
+            if (error.message.includes('ya fue dado de baja')) {
+                return reply.status(409).send({ error: error.message });
+            }
+
+            if (error.message.includes('histórico')) {
+                return reply.status(409).send({ error: error.message });
             }
 
             return reply.status(500).send({ error: 'Error interno, reintente más tarde' });

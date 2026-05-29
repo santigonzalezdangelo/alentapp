@@ -117,8 +117,6 @@ export interface PaymentDTO {
 export interface CreatePaymentRequest {
   member_id: string;
   amount: number;
-  month: number;
-  year: number;
   due_date: string;
 }
 
@@ -182,4 +180,11 @@ export interface CreateSportRequest {
   max_capacity: number;
   additional_price: number;
   requires_medical_certificate: boolean;
+}
+
+export interface UpdateSportRequest {
+  description?: string;
+  max_capacity?: number;
+  additional_price?: number;
+  requires_medical_certificate?: boolean;
 }

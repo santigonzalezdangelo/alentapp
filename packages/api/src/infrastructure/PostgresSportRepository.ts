@@ -112,6 +112,18 @@ export class PostgresSportRepository implements SportRepository {
         return this.mapToDTO(sport);
     }
 
+    async softDelete(id: string): Promise<void> {
+        const sport = await prisma.sport.findUnique({ where: { id } });
+            if (!sport || sport.deleted_at) {
+            throw new Error('El deporte no existe o ya fue dado de baja');
+        }
+
+        await prisma.sport.update({
+            where: { id },
+            data: { deleted_at: new Date() },
+        });
+    }
+
     // Transforma el resultado de Prisma en respuesta. 
     private mapToDTO(sport: DBSport): SportDTO {
         return {
