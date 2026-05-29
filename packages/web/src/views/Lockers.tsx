@@ -539,7 +539,7 @@ const getStatusLabel = (
                       color="fg.muted"
                     >
                       Para liberar un locker,
-                      debe dejar el socio sin asignar.
+                      debe dejar el socio y la fecha vacíos.
                     </Text>
                   </>
                 )}
