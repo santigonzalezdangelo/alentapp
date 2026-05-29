@@ -66,10 +66,10 @@ model Locker {
     location          LockerLocation
     status            LockerStatus   @default(AVAILABLE)
     member_id         String?
-    member            Member?        @relation(fields: [member_id], references: [id])
+    member            Member?        @relation(fields: [member_id], references: [id], onDelete: Cascade)
     contract_end_date DateTime?
 
-  @@map("lockers") // Para que en la DB la tabla se llame 'lockers' en minúscula
+  @@map("lockers")
 }
 
 model MedicalCertificate {
@@ -81,7 +81,7 @@ model MedicalCertificate {
     status         MedicalCertificateStatus @default(in_review)
     deleted_at     DateTime?
     member_id      String
-    member         Member   @relation(fields: [member_id], references: [id])
+    member         Member   @relation(fields: [member_id], references: [id], onDelete: Cascade)
 
     @@map("medical_certificates")
 }
@@ -105,7 +105,7 @@ model Payment {
     created_at   DateTime      @default(now())
     updated_at   DateTime      @updatedAt
     canceled_at  DateTime?
-    member       Member        @relation(fields: [member_id], references: [id])
+    member       Member        @relation(fields: [member_id], references: [id], onDelete: Cascade)
 
     @@index([member_id])
     @@index([status, due_date])
@@ -120,7 +120,7 @@ model Discipline {
     is_total_suspension Boolean
     deleted_at          DateTime?
     member_id           String
-    member              Member    @relation(fields: [member_id], references: [id])
+    member              Member    @relation(fields: [member_id], references: [id], onDelete: Cascade)
 
     @@map("disciplines")
 }
