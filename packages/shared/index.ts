@@ -117,8 +117,6 @@ export interface PaymentDTO {
 export interface CreatePaymentRequest {
   member_id: string;
   amount: number;
-  month: number;
-  year: number;
   due_date: string;
 }
 
