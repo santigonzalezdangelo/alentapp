@@ -37,11 +37,11 @@ export function PaymentsView() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editingPayment, setEditingPayment] = useState<PaymentDTO | null>(null);
   
+  // El período (month/year) se deriva automáticamente de due_date en el backend.
+  // No se incluye en el formulario para evitar estados inconsistentes.
   const [formData, setFormData] = useState({
     member_id: "",
     amount: 0,
-    month: new Date().getMonth() + 1,
-    year: new Date().getFullYear(),
     due_date: new Date().toISOString().split('T')[0],
   });
 
@@ -50,6 +50,13 @@ export function PaymentsView() {
   const membersCollection = useMemo(() => createListCollection({
     items: members.map(m => ({ label: `${m.name} (${m.dni})`, value: m.id }))
   }), [members]);
+
+  // Período derivado de la fecha (solo para mostrar al usuario)
+  const derivedPeriod = useMemo(() => {
+    if (!formData.due_date) return null;
+    const d = new Date(formData.due_date);
+    return { month: d.getUTCMonth() + 1, year: d.getUTCFullYear() };
+  }, [formData.due_date]);
 
   const fetchData = async () => {
     try {
@@ -83,8 +90,6 @@ export function PaymentsView() {
     setFormData({
       member_id: payment.member_id,
       amount: Number(payment.amount),
-      month: payment.month,
-      year: payment.year,
       due_date: payment.due_date.split('T')[0],
     });
     setFormErrors({});
@@ -96,8 +101,6 @@ export function PaymentsView() {
     setFormData({
       member_id: "",
       amount: 0,
-      month: new Date().getMonth() + 1,
-      year: new Date().getFullYear(),
       due_date: new Date().toISOString().split('T')[0],
     });
     setFormErrors({});
@@ -114,13 +117,8 @@ export function PaymentsView() {
     if (formData.amount <= 0) {
       errors.amount = "El monto debe ser mayor a 0";
     }
-
-    const dueDate = new Date(formData.due_date);
-    const dueDateMonth = dueDate.getUTCMonth() + 1;
-    const dueDateYear = dueDate.getUTCFullYear();
-
-    if (dueDateYear < formData.year || (dueDateYear === formData.year && dueDateMonth < formData.month)) {
-      errors.due_date = "La fecha de vencimiento no puede ser anterior al mes/año del pago";
+    if (!formData.due_date) {
+      errors.due_date = "Debe seleccionar una fecha de vencimiento";
     }
 
     if (Object.keys(errors).length > 0) {
@@ -259,6 +257,7 @@ export function PaymentsView() {
                     </SelectContent>
                   </SelectRoot>
                 </Field>
+
                 <Field 
                   label="Monto" 
                   required 
@@ -274,40 +273,17 @@ export function PaymentsView() {
                     min={0}
                   />
                 </Field>
-                <HStack gap="4">
-                  <Field 
-                    label="Mes" 
-                    required 
-                    invalid={!!formErrors.period} 
-                    errorText={formErrors.period}
-                  >
-                    <Input 
-                      type="number" 
-                      value={formData.month}
-                      onChange={(e) => setFormData({ ...formData, month: Number(e.target.value) })}
-                      required
-                      min={1}
-                      max={12}
-                      disabled={!!editingPayment}
-                    />
-                  </Field>
-                  <Field label="Año" required>
-                    <Input 
-                      type="number" 
-                      value={formData.year}
-                      onChange={(e) => setFormData({ ...formData, year: Number(e.target.value) })}
-                      required
-                      min={2000}
-                      max={2100}
-                      disabled={!!editingPayment}
-                    />
-                  </Field>
-                </HStack>
+
                 <Field 
                   label="Fecha de Vencimiento" 
                   required 
                   invalid={!!formErrors.due_date} 
                   errorText={formErrors.due_date}
+                  helperText={
+                    derivedPeriod
+                      ? `Período: ${String(derivedPeriod.month).padStart(2, '0')}/${derivedPeriod.year}`
+                      : undefined
+                  }
                 >
                   <Input 
                     type="date" 

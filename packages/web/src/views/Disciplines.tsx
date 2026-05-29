@@ -41,6 +41,9 @@ export function DisciplinesView() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [editingDisciplineId, setEditingDisciplineId] = useState<string | null>(null);
+
+  const [reasonError, setReasonError] = useState<string | null>(null);
+  const [endDateError, setEndDateError] = useState<string | null>(null);
   
   const toDateInputValue = (date: string) => {
     return date.split("T")[0];
@@ -84,6 +87,10 @@ export function DisciplinesView() {
 
   const openCreateModal = () => {
     setEditingDisciplineId(null);
+
+    setReasonError(null);
+    setEndDateError(null);
+
     setFormData({
       reason: "",
       start_date: "",
@@ -98,6 +105,9 @@ export function DisciplinesView() {
   const openEditModal = (discipline: DisciplineDTO) => {
     setEditingDisciplineId(discipline.id);
 
+    setReasonError(null);
+    setEndDateError(null);
+
     setFormData({
       reason: discipline.reason,
       start_date: toDateInputValue(discipline.start_date),
@@ -110,11 +120,33 @@ export function DisciplinesView() {
     setIsDialogOpen(true);
   };
 
+const validateForm = () => {
+    let isValid = true;
+
+    setReasonError(null);
+    setEndDateError(null);
+
+    if (formData.reason.trim().length === 0) {
+      setReasonError("El motivo de la sanción es obligatorio");
+      isValid = false;
+    }
+
+    if (formData.end_date <= formData.start_date) {
+      setEndDateError("La fecha de fin debe ser estrictamente posterior a la fecha de inicio");
+      isValid = false;
+    }
+
+    return isValid;
+ };
+
  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
+
+      if (!validateForm()) return;
+
       if (editingDisciplineId) {
         const disciplineToUpdate: UpdateDisciplineRequest = {
           reason: formData.reason,
@@ -224,6 +256,11 @@ export function DisciplinesView() {
                     }
                     required
                   />
+                  {reasonError && (
+                    <Text color="red.500" fontSize="sm">
+                      {reasonError}
+                    </Text>
+                  )}
                 </Field>
 
                 <Field label="Fecha de inicio" required>
@@ -246,6 +283,11 @@ export function DisciplinesView() {
                     }
                     required
                   />
+                  {endDateError && (
+                    <Text color="red.500" fontSize="sm">
+                      {endDateError}
+                    </Text>
+                  )}
                 </Field>
 
                 <Field label="Suspensión total">
