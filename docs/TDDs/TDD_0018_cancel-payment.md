@@ -110,7 +110,7 @@ model Payment {
   * `findExpiredPending(now)` — usado por el job de vencimiento
 * **Adaptadores de Entrada (Delivery)**:
   * `PaymentController` — endpoint HTTP `PATCH /payments/:id/cancel`
-  * `CancelExpiredPaymentsJob` — scheduler diario
+  * `CancelExpiredPaymentsUseCase` — scheduler diario
 * **Adaptador de Salida (Infrastructure)**: `PostgresPaymentRepository`
 * **Dependencia adicional**: `Clock` — abstracción para obtener la fecha/hora actual, inyectada en el caso de uso y en el job para facilitar testing.
 
@@ -133,7 +133,7 @@ Este caso de uso es invocado tanto por el `PaymentController` (HTTP) como por el
 
 ### 3.3. Job Programado
 
-#### Job: `CancelExpiredPaymentsJob`
+#### Job: `CancelExpiredPaymentsUseCase`
 
 * **Disparador**: scheduler diario (cron a las 00:30 hora local).
 * **Selección**: `status = Pendiente AND due_date < Clock.now()`.
@@ -178,7 +178,7 @@ Esto garantiza que solo una de las operaciones concurrentes materializa el cambi
 
 #### Inyección de Clock
 
-`CancelPaymentUseCase` y `CancelExpiredPaymentsJob` reciben una dependencia `Clock` por inyección. En producción, `Clock.now()` retorna la hora del sistema; en tests, se inyecta un mock que retorna una fecha fija. Esto permite:
+`CancelPaymentUseCase` y `CancelExpiredPaymentsUseCase` reciben una dependencia `Clock` por inyección. En producción, `Clock.now()` retorna la hora del sistema; en tests, se inyecta un mock que retorna una fecha fija. Esto permite:
 
 * Tests determinísticos sobre el valor de `canceled_at`.
 * Simular escenarios de vencimiento del job sin depender del reloj real.
@@ -202,7 +202,7 @@ Esto garantiza que solo una de las operaciones concurrentes materializa el cambi
 3. Ampliar `PaymentRepository` con `cancel` y `findExpiredPending`.
 4. Implementar `CancelPaymentUseCase` con manejo de idempotencia y relectura transaccional.
 5. Crear endpoint `PATCH /api/v1/payments/:id/cancel` en `PaymentController`.
-6. Implementar `CancelExpiredPaymentsJob` con scheduler diario.
+6. Implementar `CancelExpiredPaymentsUseCase` con scheduler diario.
 7. Integrar frontend administrativo con acción "Cancelar pago" en la vista de detalle.
 
 ## 6. Observaciones Adicionales
