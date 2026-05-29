@@ -200,7 +200,7 @@ const paymentController = new PaymentController(
 );
 
 // ============================================================
-// Cancelación automática de pagos vencidos (TDD-0018)
+// Cancelación automática de payments vencidos (TDD-0018)
 // ============================================================
 const cancelExpiredPaymentsUseCase = new CancelExpiredPaymentsUseCase(
     paymentRepo,
@@ -243,11 +243,11 @@ cron.schedule('30 0 * * *', () => {
     server.patch('/api/v1/sports/:id', sportController.update.bind(sportController));
     server.delete('/api/v1/sports/:id', sportController.delete.bind(sportController));
 
-    server.get('/api/v1/pagos', paymentController.getAll.bind(paymentController));
-    server.post('/api/v1/pagos', paymentController.create.bind(paymentController));
-    server.patch('/api/v1/pagos/:id', paymentController.update.bind(paymentController));
-    server.patch('/api/v1/pagos/:id/pay', paymentController.pay.bind(paymentController));
-    server.patch('/api/v1/pagos/:id/cancel', paymentController.cancel.bind(paymentController));
+    server.get('/api/v1/payments', paymentController.getAll.bind(paymentController));
+    server.post('/api/v1/payments', paymentController.create.bind(paymentController));
+    server.patch('/api/v1/payments/:id', paymentController.update.bind(paymentController));
+    server.patch('/api/v1/payments/:id/pay', paymentController.pay.bind(paymentController));
+    server.patch('/api/v1/payments/:id/cancel', paymentController.cancel.bind(paymentController));
 
     server.get('/', async (req, rep) => {
         rep.status(200).send({ msg: 'asd' });
