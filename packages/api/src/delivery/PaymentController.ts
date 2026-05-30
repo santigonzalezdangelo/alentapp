@@ -106,11 +106,14 @@ export class PaymentController {
             if (error.message === 'El pago no existe') {
                 return reply.status(404).send({ error: error.message });
             }
-            if (error.message.includes('inválido')) {
-                return reply.status(400).send({ error: error.message });
-            }
-        }
+
+        if (
+            error.message.includes('inválido') ||
+            error.message.includes('La fecha de vencimiento debe ser futura')
+        ) {
+            return reply.status(400).send({ error: error.message }); }
 
         return reply.status(500).send({ error: 'Error interno, reintente más tarde' });
     }
+}
 }
