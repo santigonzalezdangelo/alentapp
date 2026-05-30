@@ -14,6 +14,7 @@ describe('UpdateMemberUseCase', () => {
         validateEmail: vi.fn(),
         validateDniIsUnique: vi.fn(),
         isMinor: vi.fn(),
+        validateBirthdate: vi.fn(),
     } as unknown as MemberValidator;
 
     const useCase = new UpdateMemberUseCase(mockMemberRepo, mockMemberValidator);
