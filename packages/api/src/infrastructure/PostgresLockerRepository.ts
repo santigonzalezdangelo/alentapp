@@ -109,4 +109,14 @@ async update(id: string, data: any): Promise<LockerDTO> {
         : null,
     };
 }
+async releaseByMemberId(memberId: string): Promise<void> {
+    await prisma.locker.updateMany({
+        where: { member_id: memberId },
+        data: {
+            status: 'AVAILABLE',
+            member_id: null,
+            contract_end_date: null,
+        },
+    });
+}
 }
