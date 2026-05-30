@@ -53,6 +53,29 @@ export class LockerValidator {
     }
 }
 
+validateContractEndDate(date?: string | null): void {
+    if (!date) return;
+
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+        throw new Error('Formato de fecha inválido');
+    }
+
+    const year = parsedDate.getUTCFullYear();
+
+    if (year > 9999) {
+        throw new Error('Formato de fecha inválido');
+    }
+
+    const today = new Date();
+    const todayUTC = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+
+    if (parsedDate < todayUTC) {
+        throw new Error('La fecha de fin de contrato no puede ser anterior a hoy');
+    }
+}
+
 validateMaintenanceBlock(locker: any) {
     if (locker.status === 'MAINTENANCE') {
     throw new Error('El locker está en mantenimiento');

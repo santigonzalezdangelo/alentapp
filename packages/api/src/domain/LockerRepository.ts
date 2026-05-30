@@ -7,4 +7,5 @@ findAll(): Promise<LockerDTO[]>;
 findById(id: string): Promise<LockerDTO | null>;
 update(id: string, data: Partial<LockerDTO>): Promise<LockerDTO>;
 delete(id: string): Promise<void>;
+releaseByMemberId(memberId: string): Promise<void>;
 }
