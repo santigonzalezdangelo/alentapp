@@ -14,6 +14,7 @@ describe('CreateMemberUseCase', () => {
         validateEmail: vi.fn(),
         validateDniIsUnique: vi.fn(),
         isMinor: vi.fn(),
+        validateBirthdate: vi.fn(),
     } as unknown as MemberValidator;
 
     // 2. Instanciamos el caso de uso inyectando los mocks
