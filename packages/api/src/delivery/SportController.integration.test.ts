@@ -74,6 +74,22 @@ describe('Sport API Integration Tests', () => {
         await app.close();
     });
 
+    describe('GET /api/v1/sports', () => {
+        it('debe retornar código 200 y el listado de deportes', async () => {
+            const response = await app.inject({
+                method: 'GET',
+                url: '/api/v1/sports',
+            });
+
+            expect(response.statusCode).toBe(200);
+
+            const body = JSON.parse(response.payload);
+            expect(body.data).toBeInstanceOf(Array);
+            expect(body.data[0].id).toBe('sport-existing');
+            expect(body.data[0].name).toBe('Tenis');
+        });
+    });
+
     describe('POST /api/v1/sports', () => {
         it('debe retornar 201 y crear el deporte', async () => {
             const payload: CreateSportRequest = {
