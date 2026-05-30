@@ -21,6 +21,7 @@ async execute(id: string, data: UpdateLockerRequest): Promise<LockerDTO> {
         }
 
         this.lockerValidator.validateStatus(data.status);
+        this.lockerValidator.validateContractEndDate(data.contract_end_date);
 
 const isRelease = data.member_id === null;
 const isAssign = data.member_id !== undefined && data.member_id !== null;

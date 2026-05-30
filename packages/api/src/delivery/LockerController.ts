@@ -115,7 +115,8 @@ export class LockerController {
                     'asignado',
                 ) ||
                 error.message.includes('socio') ||
-                error.message.includes('Estado')
+                error.message.includes('Estado') ||
+                error.message.includes('fecha')
             )
         {
                 return reply.status(400).send({
