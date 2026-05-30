@@ -18,25 +18,23 @@ test.describe('Crear pago (TDD-0010)', () => {
         await page.goto('/payments');
         await expect(page.getByRole('heading', { name: /gestion de pagos/i })).toBeVisible();
 
-        // Abrir modal
+   
         await page.getByRole('button', { name: /crear pago/i }).first().click();
         await expect(page.getByText('Crear Nuevo Pago')).toBeVisible();
 
-        // Seleccionar socio
+       
         await page.getByText('Seleccione un socio').click();
         await page.getByText(`${member.name} (${member.dni})`).click();
 
-        // Llenar monto
+
         await page.getByLabel('Monto').fill('1500');
 
-        // Llenar fecha y verificar período derivado
         await page.getByLabel('Fecha de Vencimiento').fill(dueDate);
         await expect(page.getByText(`Período: ${month}/${year}`)).toBeVisible();
 
-        // Submit
+     
         await page.locator('[role="dialog"]').getByRole('button', { name: 'Crear Pago' }).click();
-
-        // Verificar éxito
+        
         await expect(page.getByText('Pago creado con exito')).toBeVisible();
         await expect(page.getByText(`Socio: ${member.name} (${member.dni})`)).toBeVisible();
     });
