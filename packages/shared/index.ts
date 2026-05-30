@@ -103,6 +103,8 @@ export type PaymentStatus = 'Pendiente' | 'Pagado' | 'Cancelado';
 export interface PaymentDTO {
   id: string;
   member_id: string;
+  member_name?: string;
+  member_dni?: string;
   amount: number;
   month: number;
   year: number;
