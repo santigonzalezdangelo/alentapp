@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import 'dotenv/config';
 
 import { PostgresMemberRepository } from './infrastructure/PostgresMemberRepository.js';
 import { PostgresMedicalCertificateRepository } from './infrastructure/PostgresMedicalCertificateRepository.js';
@@ -76,6 +77,10 @@ export function buildApp() {
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: true,
     });
+    
+    const lockerRepo = new PostgresLockerRepository();
+    const lockerValidator = new LockerValidator(lockerRepo);
+
 
     // ============================================================
     // Members
@@ -88,7 +93,7 @@ export function buildApp() {
     const createMemberUseCase = new CreateMemberUseCase(memberRepo, memberValidator);
     const getMembersUseCase = new GetMembersUseCase(memberRepo);
     const updateMemberUseCase = new UpdateMemberUseCase(memberRepo, memberValidator);
-    const deleteMemberUseCase = new DeleteMemberUseCase(memberRepo);
+    const deleteMemberUseCase = new DeleteMemberUseCase(memberRepo, lockerRepo);
 
     const createMedicalCertificateUseCase = new CreateMedicalCertificateUseCase(
         medicalCertificateRepo,
@@ -108,14 +113,13 @@ export function buildApp() {
         deleteMemberUseCase,
     );
 
-    const lockerRepo = new PostgresLockerRepository();
-    const lockerValidator = new LockerValidator(lockerRepo);
     const createLockerUseCase = new CreateLockerUseCase(lockerRepo, lockerValidator);
     const getLockersUseCase = new GetLockersUseCase(lockerRepo);
     
     const updateLockerUseCase = new UpdateLockerUseCase(
     lockerRepo,
-    memberRepo
+    memberRepo,
+    lockerValidator
 );
 
 const deleteLockerUseCase = new DeleteLockerUseCase(
