@@ -120,19 +120,30 @@ describe('Member API End-to-End Tests', () => {
         expect(dbMember?.name).toBe('Socio E2E Modificado');
     });
 
-    it('5. DELETE: Debe eliminar físicamente al socio de la base de datos', async () => {
-        const response = await app.inject({
-            method: 'DELETE',
-            url: `/api/v1/socios/${createdMemberId}`
-        });
-
-        expect(response.statusCode).toBe(204);
-
-        // Verificar que Prisma ya no lo encuentra en la DB Real
-        const dbMember = await prisma.member.findUnique({ where: { id: createdMemberId } });
-        expect(dbMember).toBeNull();
-        
-        // Anular variable para que afterAll no intente borrarlo nuevamente
-        createdMemberId = '';
+    it('5. DELETE: Debe dar de baja lógicamente al socio (soft delete)', async () => {
+    const response = await app.inject({
+        method: 'DELETE',
+        url: `/api/v1/socios/${createdMemberId}`
     });
-});
+
+    expect(response.statusCode).toBe(204);
+
+    // La fila debe SEGUIR existiendo físicamente, pero marcada con deleted_at.
+    const dbMember = await prisma.member.findUnique({ where: { id: createdMemberId } });
+    expect(dbMember).not.toBeNull();
+    expect(dbMember?.deleted_at).not.toBeNull();
+
+    // A nivel API, el socio ya no debe aparecer en el listado.
+    const listResponse = await app.inject({
+        method: 'GET',
+        url: '/api/v1/socios'
+    });
+    const body = JSON.parse(listResponse.payload);
+    const sigueEnLista = body.data.some((m: { id: string }) => m.id === createdMemberId);
+    expect(sigueEnLista).toBe(false);
+
+    // NO anulamos createdMemberId: dejamos que afterAll borre físicamente
+    // la fila marcada, para mantener la base limpia entre corridas.
+        });
+    });
+
