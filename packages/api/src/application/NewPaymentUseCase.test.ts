@@ -47,6 +47,7 @@ describe('NewPaymentUseCase', () => {
             markAsPaidIfPending: vi.fn(),
             cancelIfPending: vi.fn(),
             findExpiredPending: vi.fn(),
+            
         };
 
         mockMemberRepo = {
