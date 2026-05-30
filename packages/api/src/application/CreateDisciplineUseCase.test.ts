@@ -3,7 +3,7 @@ import { CreateDisciplineUseCase } from './CreateDisciplineUseCase.js';
 import { DisciplineRepository } from '../domain/DisciplineRepository.js';
 import { DisciplineValidator } from '../domain/services/DisciplineValidator.js';
 import { CreateDisciplineRequest } from '@alentapp/shared';
-import { CreateMemberRequest } from '../../../shared/index.js';
+import { CreateMemberRequest } from '@alentapp/shared';
 
 describe('CreateDisciplineUseCase', () => {
     // 1. Creamos Mocks de nuestras dependencias (Puertos y Servicios)
