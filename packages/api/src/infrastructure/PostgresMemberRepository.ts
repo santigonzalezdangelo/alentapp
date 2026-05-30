@@ -20,6 +20,8 @@ type DBMember = {
     category: 'Pleno' | 'Cadete' | 'Honorario';
     status: 'Activo' | 'Moroso' | 'Suspendido';
     created_at: Date;
+    deleted_at: Date | null;
+
 };
 
 export class PostgresMemberRepository implements MemberRepository {
@@ -31,35 +33,36 @@ export class PostgresMemberRepository implements MemberRepository {
                 email: data.email,
                 birthdate: new Date(data.birthdate),
                 category: data.category,
+
             },
         });
 
         return this.mapToDTO(member);
     }
 
-    async findById(id: string): Promise<MemberDTO | null> {
-        const member = await prisma.member.findUnique({
-            where: { id },
+    async findAll(): Promise<MemberDTO[]> {
+        const members = await prisma.member.findMany({
+            where: { deleted_at: null },        
+            orderBy: { created_at: 'desc' },
         });
+        return members.map(this.mapToDTO);
+    }
 
+    async findById(id: string): Promise<MemberDTO | null> {
+     
+        const member = await prisma.member.findFirst({
+            where: { id, deleted_at: null },     
+        });
         return member ? this.mapToDTO(member) : null;
     }
 
     async findByDni(dni: string): Promise<MemberDTO | null> {
-        const member = await prisma.member.findUnique({
-            where: { dni },
+        const member = await prisma.member.findFirst({
+            where: { dni, deleted_at: null },    
         });
-
         return member ? this.mapToDTO(member) : null;
     }
 
-    async findAll(): Promise<MemberDTO[]> {
-        const members = await prisma.member.findMany({
-            orderBy: { created_at: 'desc' },
-        });
-
-        return members.map(this.mapToDTO);
-    }
 
     async update(id: string, data: UpdateMemberRequest): Promise<MemberDTO> {
         const member = await prisma.member.update({
@@ -76,12 +79,14 @@ export class PostgresMemberRepository implements MemberRepository {
 
         return this.mapToDTO(member);
     }
-
     async delete(id: string): Promise<void> {
-        await prisma.member.delete({
+        await prisma.member.update({
             where: { id },
+            data: { deleted_at: new Date() },
         });
     }
+
+
 
     private mapToDTO(member: DBMember): MemberDTO {
         return {
