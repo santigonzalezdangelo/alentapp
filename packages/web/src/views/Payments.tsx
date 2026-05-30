@@ -58,6 +58,18 @@ export function PaymentsView() {
     return { month: d.getUTCMonth() + 1, year: d.getUTCFullYear() };
   }, [formData.due_date]);
 
+  // Resuelve el nombre del socio de un pago.
+  // 1) Lo busca en la lista de socios activos (caso normal).
+  // 2) Si no está (socio dado de baja por borrado lógico), usa el nombre
+  //    que el backend adjunta al pago (member_name / member_dni).
+  // 3) Como último recurso muestra el member_id para no romper la vista.
+  const resolveSocioLabel = (payment: PaymentDTO): string => {
+    const member = members.find(m => m.id === payment.member_id);
+    if (member) return `${member.name} (${member.dni})`;
+    if (payment.member_name) return `${payment.member_name} (${payment.member_dni ?? '-'})`;
+    return payment.member_id;
+  };
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -207,21 +219,18 @@ export function PaymentsView() {
             </Center>
           ) : (
             <VStack align="stretch" gap="4">
-              {payments.map((payment) => {
-                const member = members.find(m => m.id === payment.member_id);
-                return (
-                  <Box key={payment.id}>
-                    <Text fontSize="sm" color="gray.500" mb={1} fontWeight="bold">
-                      Socio: {member ? `${member.name} (${member.dni})` : payment.member_id}
-                    </Text>
-                    <PaymentItem 
-                      payment={payment} 
-                      onUpdate={handleUpdate}
-                      onEdit={handleEdit}
-                    />
-                  </Box>
-                );
-              })}
+              {payments.map((payment) => (
+                <Box key={payment.id}>
+                  <Text fontSize="sm" color="gray.500" mb={1} fontWeight="bold">
+                    Socio: {resolveSocioLabel(payment)}
+                  </Text>
+                  <PaymentItem 
+                    payment={payment} 
+                    onUpdate={handleUpdate}
+                    onEdit={handleEdit}
+                  />
+                </Box>
+              ))}
             </VStack>
           )}
         </Box>
