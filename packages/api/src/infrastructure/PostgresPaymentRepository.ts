@@ -33,6 +33,7 @@ type DBPayment = {
     created_at: Date;
     updated_at: Date;
     canceled_at: Date | null;
+    member?: { name: string; dni: string } | null;
 };
 
 export class PostgresPaymentRepository implements PaymentRepository {
@@ -58,6 +59,7 @@ export class PostgresPaymentRepository implements PaymentRepository {
     async findAll(): Promise<PaymentDTO[]> {
         const payments = await getPrisma().payment.findMany({
             orderBy: { created_at: 'desc' },
+            include: { member: { select: { name: true, dni: true } } }, 
         });
         return payments.map((p) => this.mapToDTO(p as unknown as DBPayment));
     }
@@ -66,6 +68,7 @@ export class PostgresPaymentRepository implements PaymentRepository {
         const payments = await getPrisma().payment.findMany({
             where: { member_id },
             orderBy: { due_date: 'desc' },
+            include: { member: { select: { name: true, dni: true } } },
         });
         return payments.map((p) => this.mapToDTO(p as unknown as DBPayment));
     }
@@ -165,6 +168,8 @@ export class PostgresPaymentRepository implements PaymentRepository {
         return {
             id: payment.id,
             member_id: payment.member_id,
+            member_name: payment.member?.name,  
+            member_dni: payment.member?.dni,     
             amount: amountNumber,
             month: payment.month,
             year: payment.year,
