@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('MedicalCertificates Full-Stack E2E', () => {
+    let memberId: string;
 
     test('debe mostrar el estado vacío cuando no hay certificados en la DB', async ({ page }) => {
         await page.goto('/medical-certificates');
@@ -29,7 +30,7 @@ test.describe('MedicalCertificates Full-Stack E2E', () => {
         expect(memberResponse.ok()).toBeTruthy();
 
         const memberBody = await memberResponse.json();
-        const memberId = memberBody.data.id;
+        memberId = memberBody.data.id;
 
         await page.goto('/medical-certificates');
 
@@ -52,10 +53,31 @@ test.describe('MedicalCertificates Full-Stack E2E', () => {
         await expect(page.getByText(dni)).toBeVisible();
         await expect(page.getByText('2026-05-01')).toBeVisible();
         await expect(page.getByText('2026-05-15')).toBeVisible();
+    });
 
-        const deleteResponse = await request.delete(
-            `http://localhost:3001/api/v1/socios/${memberId}`,
-        );
-        expect(deleteResponse.ok()).toBeTruthy();
+    test('debe editar el certificado creado y ver el cambio en la tabla', async ({ page, request }) => {
+        await page.goto('/medical-certificates');
+
+        await expect(page.getByText('MP12345')).toBeVisible({ timeout: 10000 });
+
+        await page.getByRole('button', { name: /Editar certificado/i }).first().click();
+        await expect(page.getByText('Editar Certificado Médico')).toBeVisible();
+
+        await page.getByLabel('Matrícula del Médico').fill('MP99999');
+
+        await page.getByRole('button', { name: /Guardar Cambios/i }).click();
+        await expect(page.getByRole('button', { name: /Guardar Cambios/i })).toBeHidden();
+
+        await expect(page.getByText('MP99999')).toBeVisible({ timeout: 10000 });
+        await expect(page.getByText('MP12345', { exact: true })).toBeHidden();
+    });
+
+    test.afterAll(async ({ request }) => {
+        if (memberId) {
+            const deleteResponse = await request.delete(
+                `http://localhost:3001/api/v1/socios/${memberId}`,
+            );
+            expect(deleteResponse.ok()).toBeTruthy();
+        }
     });
 });
