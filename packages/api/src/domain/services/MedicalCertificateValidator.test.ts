@@ -61,4 +61,54 @@ describe('MedicalCertificateValidator', () => {
             expect(mockMemberRepo.findById).toHaveBeenCalledWith('nonexistent');
         });
     });
+
+    describe('validateHasUpdateFields', () => {
+        it('debe pasar si se envía al menos un campo para actualizar', () => {
+            expect(() =>
+                validator.validateHasUpdateFields({ doctor_license: 'LIC999' })
+            ).not.toThrow();
+        });
+
+        it('debe lanzar error si no se envía ningún campo para actualizar', () => {
+            expect(() =>
+                validator.validateHasUpdateFields({})
+            ).toThrow('Debe enviarse al menos un campo para actualizar');
+        });
+    });
+
+    describe('validateStatusTransition', () => {
+        it('debe pasar si la transición es de in_review a validated', () => {
+            expect(() =>
+                validator.validateStatusTransition('in_review', 'validated')
+            ).not.toThrow();
+        });
+
+        it('debe lanzar error si la transición no es de in_review a validated', () => {
+            expect(() =>
+                validator.validateStatusTransition('validated', 'validated')
+            ).toThrow('transición de estado no permitida');
+        });
+    });
+
+    describe('validateExpiryIsFuture', () => {
+        it('debe pasar si la fecha de vencimiento es futura', () => {
+            const futureDate = new Date();
+            futureDate.setFullYear(futureDate.getFullYear() + 1);
+            const futureStr = futureDate.toISOString().split('T')[0];
+
+            expect(() =>
+                validator.validateExpiryIsFuture(futureStr)
+            ).not.toThrow();
+        });
+
+        it('debe lanzar error si la fecha de vencimiento es hoy o pasada', () => {
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+
+            expect(() =>
+                validator.validateExpiryIsFuture(todayStr)
+            ).toThrow('No se puede validar un certificado vencido');
+        });
+    });
 });
+
