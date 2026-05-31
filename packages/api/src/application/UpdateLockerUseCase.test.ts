@@ -76,7 +76,7 @@ describe('UpdateLockerUseCase', () => {
 
         await useCase.execute('locker-1', { status: 'MAINTENANCE' });
 
-        expect(mockLockerRepo.update).toHaveBeenCalledWith('locker-1', expect.objectContaining({ status: 'MAINTENANCE' }));
+        expect(mockLockerRepo.update).toHaveBeenCalledWith('locker-1', expect.objectContaining({ status: 'MAINTENANCE', member_id: 'member-1', }));
     });
 
     it('debe liberar un locker ocupado y pasar a disponible', async () => {
