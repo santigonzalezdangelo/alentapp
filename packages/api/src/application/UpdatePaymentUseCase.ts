@@ -27,6 +27,7 @@ export class UpdatePaymentUseCase {
 
         if (data.due_date !== undefined) {
             const parsedDue = this.validator.parseDueDate(data.due_date);
+            this.validator.validateDueDateIsFuture(parsedDue);
             const period = this.validator.extractPeriod(parsedDue);
             month = period.month;
             year = period.year;
