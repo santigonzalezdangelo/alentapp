@@ -1,6 +1,20 @@
 import { test, expect } from '@playwright/test';
+import { API_URL } from './global-setup.js';
 
 test.describe('Sports Full-Stack E2E', () => {
+    test.beforeAll(async ({ request }) => {
+        // Eliminamos los deportes de ejecuciones anteriores para partir de un estado limpio.
+        const response = await request.get(`${API_URL}/api/v1/sports`);
+        const body = await response.json();
+
+        const testSports = body.data.filter((sport: any) =>
+            sport.name.startsWith('Sport E2E')
+        );
+
+        for (const sport of testSports) {
+            await request.delete(`${API_URL}/api/v1/sports/${sport.id}`);
+        }
+    });
     test('debe crear un deporte real y rechazar otro con nombre duplicado', async ({ page }) => {
         await page.goto('/sports');
 
@@ -54,7 +68,7 @@ test.describe('Sports Full-Stack E2E', () => {
         const sportName = `Sport E2E Update ${Date.now()}`;
 
         // Creamos un deporte real desde la API para que el test se enfoque en editar.
-        const createResponse = await request.post('http://localhost:3001/api/v1/sports', {
+        const createResponse = await request.post(`${API_URL}/api/v1/sports`, {
             data: {
                 name: sportName,
                 description: 'Deporte previo a edición',
@@ -93,5 +107,39 @@ test.describe('Sports Full-Stack E2E', () => {
         await expect(page.getByText('Deporte editado desde e2e')).toBeVisible({ timeout: 10000 });
         await expect(page.getByText(sportName)).toBeVisible();
 
+    });
+    test('debe eliminar un deporte real y dejar de mostrarlo en la tabla', async ({ page, request }) => {
+        // Con Date.now() cada ejecución genera un nombre distinto y el test siempre parte de un estado limpio.
+        const sportName = `Sport E2E Delete ${Date.now()}`;
+
+        // Creamos un deporte real desde la API para que el test se enfoque solo en eliminar.
+        const createResponse = await request.post(`${API_URL}/api/v1/sports`, {
+            data: {
+                name: sportName,
+                description: 'Deporte creado para eliminar desde e2e',
+                max_capacity: 20,
+                additional_price: 3000,
+                requires_medical_certificate: true,
+            },
+        });
+
+        expect(createResponse.ok()).toBeTruthy();
+
+        await page.goto('/sports');
+
+        // Verificamos que el deporte exista antes de eliminarlo.
+        await expect(page.getByText(sportName)).toBeVisible({ timeout: 10000 });
+
+        const sportRow = page.getByRole('row').filter({ hasText: sportName });
+
+        // Aceptamos el diálogo de confirmación de eliminación.
+        page.once('dialog', async (dialog) => {
+            await dialog.accept();
+        });
+
+        // Hacemos click en el botón de eliminar de la fila del deporte creado.
+        await sportRow.getByRole('button', { name: /Eliminar deporte/i }).click();
+        // Verificamos que ya no aparezca como deporte activo en la tabla.
+        await expect(page.getByText(sportName)).toBeHidden({ timeout: 10000 });
     });
 });
