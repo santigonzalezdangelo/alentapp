@@ -168,4 +168,12 @@ test.describe('Payments Full-Stack E2E', () => {
    
         await expect(page.getByText('El monto debe ser mayor a 0')).toBeVisible();
     });
+
+        test.afterAll(async ({ request }) => {
+        if (memberId){
+            //eliminamos el miembro creado para no dejar datos basura
+            const deleteResponse = await request.delete(`http://localhost:3001/api/v1/socios/${memberId}`);
+            expect(deleteResponse.ok()).toBeTruthy();
+        }
+    });
 });
