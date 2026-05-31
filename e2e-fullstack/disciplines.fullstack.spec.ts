@@ -10,7 +10,9 @@ test.describe('Disciplines Full-Stack E2E', () => {
     });
 
     test('debe crear una sancion real y mostrarla en la tabla', async ({ page, request }) => {
-        const dni = '46268119';
+        const dni = Math.floor(
+            10000000 + Math.random() * 90000000
+        ).toString();
         
         const memberResponse = await request.post('http://localhost:3001/api/v1/socios', {
             data: {
