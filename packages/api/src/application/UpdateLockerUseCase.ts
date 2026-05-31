@@ -29,6 +29,7 @@ const isMaintenance = data.status === 'MAINTENANCE';
 
 if (isAssign) {
     this.lockerValidator.validateMaintenanceBlock(locker);
+    this.lockerValidator.validateAlreadyOccupied(locker, data.member_id);
 
     const member = await this.memberRepo.findById(data.member_id!);
     if (!member) throw new Error('El socio no existe');

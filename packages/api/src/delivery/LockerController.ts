@@ -107,22 +107,22 @@ export class LockerController {
                 });
             }
 
-            if (
-                error.message.includes(
-                    'mantenimiento',
-                ) ||
-                error.message.includes(
-                    'asignado',
-                ) ||
-                error.message.includes('socio') ||
-                error.message.includes('Estado') ||
-                error.message.includes('fecha')
-            )
-        {
-                return reply.status(400).send({
-                    message: error.message,
-                });
-            }
+if (error.message.includes('ya se encuentra asignado')) {
+    return reply.status(409).send({
+        message: error.message,
+    });
+}
+
+if (
+    error.message.includes('mantenimiento') ||
+    error.message.includes('socio') ||
+    error.message.includes('Estado') ||
+    error.message.includes('fecha')
+) {
+    return reply.status(400).send({
+        message: error.message,
+    });
+}
 
             return reply.status(500).send({
                 message: 'Error interno',
