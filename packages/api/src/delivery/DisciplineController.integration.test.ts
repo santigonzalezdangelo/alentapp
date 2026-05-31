@@ -21,17 +21,31 @@ vi.mock('../infrastructure/PostgresDisciplineRepository.js', () => {
             }
 
             async findById(id: string) {
-                return id === 'discipline-1'
-                    ? {
-                          id: 'discipline-1',
-                          reason: 'Conducta inapropiada',
-                          start_date: '2026-05-01T00:00:00.000Z',
-                          end_date: '2026-05-10T00:00:00.000Z',
-                          is_total_suspension: true,
-                          deleted_at: null,
-                          member_id: 'member-1',
-                      }
-                    : null;
+                if (id === 'discipline-1') {
+                    return {
+                        id: 'discipline-1',
+                        reason: 'Conducta inapropiada',
+                        start_date: '2026-05-01T00:00:00.000Z',
+                        end_date: '2026-05-10T00:00:00.000Z',
+                        is_total_suspension: true,
+                        deleted_at: null,
+                        member_id: 'member-1',
+                    };
+                }
+
+                if (id === 'discipline-eliminada') {
+                    return {
+                        id: 'discipline-eliminada',
+                        reason: 'Conducta inapropiada',
+                        start_date: '2026-05-01T00:00:00.000Z',
+                        end_date: '2026-05-10T00:00:00.000Z',
+                        is_total_suspension: true,
+                        deleted_at: '2026-05-15T00:00:00.000Z',
+                        member_id: 'member-1',
+                    };
+                }
+
+                return null;
             }
 
             async create(data: any) {
@@ -183,11 +197,11 @@ describe('Discipline API Integration Tests', () => {
             expect(body.data.reason).toBe('Conducta muy inapropiada');
         });
 
-        it('debe retornar 404 si la sancion no existe', async () => {
+        it('debe retornar 404 si la sanción no existe', async () => {
             const payload: UpdateDisciplineRequest = {
                 reason: "Falta leve",
                 is_total_suspension: false,
-            }
+            };
 
             const response = await app.inject({
                 method: 'PATCH',
@@ -212,6 +226,37 @@ describe('Discipline API Integration Tests', () => {
 
             expect(response.statusCode).toBe(400);
             expect(JSON.parse(response.payload).message).toBe('La fecha de fin debe ser estrictamente posterior a la fecha de inicio');
+        });
+    });
+
+    describe('DELETE /api/v1/disciplines/:id', () => {
+        it('debe retornar 204 y eliminar la sanción', async () => {
+            const response = await app.inject({
+                method: 'DELETE',
+                url: '/api/v1/disciplines/discipline-1',
+            });
+
+            expect(response.statusCode).toBe(204);
+            expect(response.payload).toBe('');
+        });
+
+        it('debe retornar 404 si la sanción no existe', async () => {
+            const response = await app.inject({
+                method: 'DELETE',
+                url: '/api/v1/disciplines/discipline-2',
+            });
+            expect(response.statusCode).toBe(404);
+            expect(JSON.parse(response.payload).message).toBe('La sanción no existe');
+        });
+
+        it('debe retornar 409 si la sanción ya fue eliminada', async () => {
+            const response = await app.inject({
+                method: 'DELETE',
+                url: '/api/v1/disciplines/discipline-eliminada',
+            });
+
+            expect(response.statusCode).toBe(409);
+            expect(JSON.parse(response.payload).message).toBe('La sanción ya fue eliminada');
         });
     });
 });
