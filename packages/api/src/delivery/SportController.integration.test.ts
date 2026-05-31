@@ -14,6 +14,15 @@ vi.mock('../infrastructure/PostgresSportRepository.js', () => {
             requires_medical_certificate: true,
             deleted_at: null,
         },
+        {
+            id: 'sport-deleted',
+            name: 'Fútbol',
+            description: 'Deporte ya eliminado',
+            max_capacity: 22,
+            additional_price: 4000,
+            requires_medical_certificate: true,
+            deleted_at: '2026-05-01T00:00:00.000Z',
+        },
     ];
 
     const normalizeName = (name: string) =>
@@ -79,8 +88,18 @@ vi.mock('../infrastructure/PostgresSportRepository.js', () => {
                 };
             }
 
-            async softDelete() {
-                return;
+            async softDelete(id: string) {
+                const sport = activeSports.find((sport) => sport.id === id);
+
+                if (!sport) {
+                    throw new Error('El deporte no existe');
+                }
+
+                if (sport.deleted_at) {
+                    throw new Error('El deporte ya fue dado de baja');
+                }
+
+                sport.deleted_at = '2026-05-01T00:00:00.000Z';
             }
         },
     };
@@ -188,8 +207,6 @@ describe('Sport API Integration Tests', () => {
 
             expect(body.data.max_capacity).toBe(30);
             expect(body.data.additional_price).toBe(7000);
-
-            // Importante: false es un valor válido, no debe ignorarse.
             expect(body.data.requires_medical_certificate).toBe(false);
         });
 
@@ -223,6 +240,42 @@ describe('Sport API Integration Tests', () => {
 
             const body = JSON.parse(response.payload);
             expect(body.error).toBe('El deporte no existe');
+        });
+    });
+
+    describe('DELETE /api/v1/sports/:id', () => {
+        it('debe retornar 204 si se elimina correctamente', async () => {
+            const response = await app.inject({
+                method: 'DELETE',
+                url: '/api/v1/sports/sport-existing',
+            });
+
+            expect(response.statusCode).toBe(204);
+            expect(response.payload).toBe('');
+        });
+
+        it('debe retornar 404 si el deporte no existe', async () => {
+            const response = await app.inject({
+                method: 'DELETE',
+                url: '/api/v1/sports/sport-inexistente',
+            });
+
+            expect(response.statusCode).toBe(404);
+
+            const body = JSON.parse(response.payload);
+            expect(body.error).toBe('El deporte no existe');
+        });
+
+        it('debe retornar 409 si el deporte ya fue dado de baja', async () => {
+            const response = await app.inject({
+                method: 'DELETE',
+                url: '/api/v1/sports/sport-deleted',
+            });
+
+            expect(response.statusCode).toBe(409);
+
+            const body = JSON.parse(response.payload);
+            expect(body.error).toBe('El deporte ya fue dado de baja');
         });
     });
 });
