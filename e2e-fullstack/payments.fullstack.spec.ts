@@ -1,11 +1,12 @@
 import { test, expect } from '@playwright/test';
+import { uniqueDni, uniqueEmail, uniqueName } from './test-data.js';
 
 const API_URL = 'http://localhost:3001/api/v1';
 
 const TEST_MEMBER = {
-    name: 'Socio E2E Payment',
-    dni: '77788899',
-    email: 'payment-e2e@test.com',
+    name: uniqueName('Socio E2E Payment'),
+    dni: uniqueDni(),
+    email: uniqueEmail(),
     birthdate: '1990-01-01',
     category: 'Pleno',
 };
@@ -20,7 +21,6 @@ test.describe('Payments Full-Stack E2E', () => {
         memberId = body.data.id;
     });
 
-    // ─── PR 1: Crear pago ────────────────────────────────────────────────────
 
     test('debe mostrar el estado vacío cuando no hay pagos en la DB', async ({ page }) => {
         await page.goto('/payments');
