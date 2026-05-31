@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Disciplines Full-Stack E2E', () => {
+    //para poder eliminar el miembro creado al final del test
+    let memberId: string;
 
     test('debe mostrar el estado vacío cuando no hay sanciones en la DB', async ({ page }) => {
         await page.goto('/disciplines');
@@ -8,7 +10,9 @@ test.describe('Disciplines Full-Stack E2E', () => {
     });
 
     test('debe crear una sancion real y mostrarla en la tabla', async ({ page, request }) => {
-        const dni = '46268119';
+        const dni = Math.floor(
+            10000000 + Math.random() * 90000000
+        ).toString();
         
         const memberResponse = await request.post('http://localhost:3001/api/v1/socios', {
             data: {
@@ -28,7 +32,7 @@ test.describe('Disciplines Full-Stack E2E', () => {
         expect(memberResponse.ok()).toBeTruthy();
 
         const memberBody = await memberResponse.json();
-        const memberId = memberBody.data.id;
+        memberId = memberBody.data.id;
 
         await page.goto('/disciplines');
 
@@ -49,9 +53,31 @@ test.describe('Disciplines Full-Stack E2E', () => {
         await expect(page.getByText(dni)).toBeVisible();
         await expect(page.getByText('01/05/2026')).toBeVisible();
         await expect(page.getByText('15/05/2026')).toBeVisible();
+    });
 
-        //eliminamos el miembro creado para no dejar datos basura
-        const deleteResponse = await request.delete(`http://localhost:3001/api/v1/socios/${memberId}`);
-        expect(deleteResponse.ok()).toBeTruthy();
+    test('debe editar la sanción creada y ver el cambio en la tabla', async ({ page, request }) => {
+        await page.goto('/disciplines');
+
+        await expect(page.getByText('Conducta inapropiada')).toBeVisible( {timeout: 10000} );
+
+        await page.getByRole('button', { name: /Editar sanción/i }).first().click();
+        await expect(page.getByText('Editar Sanción')).toBeVisible();
+
+        await page.getByLabel('Motivo').fill('Daño a la propiedad del club');
+
+        await page.getByRole('button', { name: /Guardar Cambios/i }).click();
+        await expect(page.getByRole('button', { name: /Guardar Cambios/i })).toBeHidden();
+
+        await expect(page.getByText('Daño a la propiedad del club')).toBeVisible({ timeout: 10000 });
+
+        await expect(page.getByText('Conducta inapropiada', { exact: true })).toBeHidden();
+    });
+
+    test.afterAll(async ({ request }) => {
+        if (memberId){
+            //eliminamos el miembro creado para no dejar datos basura
+            const deleteResponse = await request.delete(`http://localhost:3001/api/v1/socios/${memberId}`);
+            expect(deleteResponse.ok()).toBeTruthy();
+        }
     });
 });

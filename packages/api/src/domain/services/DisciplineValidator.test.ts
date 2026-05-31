@@ -60,6 +60,34 @@ describe('DisciplineValidator', () => {
             expect(mockMemberRepo.findById).toHaveBeenCalledWith('nonexistent-member');
         });
     });
+
+    describe('validateHasUpdateFields', () => {
+        it('debe pasar si se envía al menos un campo para actualizar', () => {
+            expect(() =>
+                validator.validateHasUpdateFields({ reason: 'Nueva razón' })
+            ).not.toThrow();
+        });
+
+        it('debe lanzar error si no se envía ningún campo para actualizar', () => {
+            expect(() =>
+                validator.validateHasUpdateFields({})
+            ).toThrow('Debe enviarse al menos un campo para actualizar');
+        });
+    });
+
+    describe('validateMemberIdIsNotPresent', () => {
+        it('debe pasar si no se incluye member_id en los datos', () => {
+            expect(() =>
+                validator.validateMemberIdIsNotPresent({ reason: 'Nueva razón' })
+            ).not.toThrow();
+        });
+
+        it('debe lanzar error si se incluye member_id en los datos', () => { 
+            expect(() =>
+                validator.validateMemberIdIsNotPresent({ member_id: 'member-1' })
+            ).toThrow('No se permite modificar el socio asociado a la sanción');
+        });
+    });
 });
 
 
