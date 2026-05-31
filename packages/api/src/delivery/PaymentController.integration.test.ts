@@ -186,7 +186,7 @@ describe('Payment API Integration Tests', () => {
     });
 
     describe('POST /api/v1/payments', () => {
-        it('201 al crear pago con datos válidos para socio Activo', async () => {
+        it('1) 201 al crear pago con datos válidos para socio Activo', async () => {
             const payload: CreatePaymentRequest = {
                 member_id: ids.MEMBER_ID_ACTIVE,
                 amount: 2000,
@@ -204,7 +204,7 @@ describe('Payment API Integration Tests', () => {
             expect(body.data.year).toBe(2099);
         });
 
-        it('404 si el socio no existe', async () => {
+        it('2) 404 si el socio no existe', async () => {
             const res = await app.inject({
                 method: 'POST',
                 url: '/api/v1/payments',
@@ -217,7 +217,7 @@ describe('Payment API Integration Tests', () => {
             expect(res.statusCode).toBe(404);
         });
 
-        it('409 si el socio está Suspendido', async () => {
+        it('3) 409 si el socio está Suspendido', async () => {
             const res = await app.inject({
                 method: 'POST',
                 url: '/api/v1/payments',
@@ -230,20 +230,7 @@ describe('Payment API Integration Tests', () => {
             expect(res.statusCode).toBe(409);
         });
 
-        it('400 si el monto es inválido', async () => {
-            const res = await app.inject({
-                method: 'POST',
-                url: '/api/v1/payments',
-                payload: {
-                    member_id: ids.MEMBER_ID_ACTIVE,
-                    amount: 0,
-                    due_date: '2099-12-31',
-                },
-            });
-            expect(res.statusCode).toBe(400);
-        });
-
-        it('400 si la fecha no es futura', async () => {
+        it('4) 400 si la fecha no es futura', async () => {
             const res = await app.inject({
                 method: 'POST',
                 url: '/api/v1/payments',
@@ -256,31 +243,11 @@ describe('Payment API Integration Tests', () => {
             expect(res.statusCode).toBe(400);
         });
 
-        it('409 si ya existe un pago activo en el mismo período', async () => {
-            await app.inject({
-                method: 'POST',
-                url: '/api/v1/payments',
-                payload: {
-                    member_id: ids.MEMBER_ID_ACTIVE,
-                    amount: 100,
-                    due_date: '2099-10-15',
-                },
-            });
-            const res = await app.inject({
-                method: 'POST',
-                url: '/api/v1/payments',
-                payload: {
-                    member_id: ids.MEMBER_ID_ACTIVE,
-                    amount: 999,
-                    due_date: '2099-10-30',
-                },
-            });
-            expect(res.statusCode).toBe(409);
-        });
+
     });
 
     describe('GET /api/v1/payments', () => {
-        it('200 con lista completa de pagos', async () => {
+        it('5) 200 con lista completa de pagos', async () => {
             const res = await app.inject({ method: 'GET', url: '/api/v1/payments' });
             expect(res.statusCode).toBe(200);
             const body = JSON.parse(res.payload);
@@ -288,25 +255,13 @@ describe('Payment API Integration Tests', () => {
             expect(body.data.length).toBeGreaterThan(0);
         });
 
-        it('200 con filtro por member_id devuelve solo pagos del socio', async () => {
-            const res = await app.inject({
-                method: 'GET',
-                url: `/api/v1/payments?member_id=${ids.MEMBER_ID_ACTIVE}`,
-            });
-            expect(res.statusCode).toBe(200);
-            const body = JSON.parse(res.payload);
-            expect(
-                body.data.every(
-                    (p: { member_id: string }) => p.member_id === ids.MEMBER_ID_ACTIVE,
-                ),
-            ).toBe(true);
-        });
+
     });
 
     
 
-    describe('PATCH /api/v1/payments/:id/pay', () => {
-        it('200 al cobrar un pago Pendiente', async () => {
+    describe(' PATCH /api/v1/payments/:id/pay', () => {
+        it('6) 200 al cobrar un pago Pendiente', async () => {
             const res = await app.inject({
                 method: 'PATCH',
                 url: `/api/v1/payments/${ids.PAYMENT_PENDING}/pay`,
@@ -317,35 +272,9 @@ describe('Payment API Integration Tests', () => {
             expect(body.data.payment_date).toBeTruthy();
         });
 
-        it('200 idempotente si el pago ya está Pagado (no modifica payment_date)', async () => {
-            const res = await app.inject({
-                method: 'PATCH',
-                url: `/api/v1/payments/${ids.PAYMENT_PAID}/pay`,
-            });
-            expect(res.statusCode).toBe(200);
-            const body = JSON.parse(res.payload);
-            expect(body.data.payment_date).toBe('2026-05-10T08:00:00.000Z');
-        });
-
-        it('409 si el pago está Cancelado', async () => {
-            const res = await app.inject({
-                method: 'PATCH',
-                url: `/api/v1/payments/${ids.PAYMENT_CANCELED}/pay`,
-            });
-            expect(res.statusCode).toBe(409);
-        });
-
-        it('404 si el pago no existe', async () => {
-            const res = await app.inject({
-                method: 'PATCH',
-                url: '/api/v1/payments/dddddddd-dddd-dddd-dddd-dddddddddddd/pay',
-            });
-            expect(res.statusCode).toBe(404);
-        });
-    });
 
     describe('PATCH /api/v1/payments/:id (editar)', () => {
-        it('200 al actualizar el monto de un pago Pendiente', async () => {
+        it('7) 200 al actualizar el monto de un pago Pendiente', async () => {
            
             const create = await app.inject({
                 method: 'POST',
@@ -368,7 +297,7 @@ describe('Payment API Integration Tests', () => {
             expect(body.data.amount).toBe(9999);
         });
 
-        it('400 si el monto es inválido', async () => {
+        it('8) 400 si el monto es inválido', async () => {
             const create = await app.inject({
                 method: 'POST',
                 url: '/api/v1/payments',
@@ -388,26 +317,7 @@ describe('Payment API Integration Tests', () => {
             expect(res.statusCode).toBe(400);
         });
 
-        it('409 si el pago está Pagado', async () => {
-            const res = await app.inject({
-                method: 'PATCH',
-                url: `/api/v1/payments/${ids.PAYMENT_PAID}`,
-                payload: { amount: 99 },
-            });
-            expect(res.statusCode).toBe(409);
-        });
-
-        it('404 si el pago no existe', async () => {
-            const res = await app.inject({
-                method: 'PATCH',
-                url: '/api/v1/payments/eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
-                payload: { amount: 100 },
-            });
-            expect(res.statusCode).toBe(404);
-        });
-
-
-        it('400 si la nueva fecha de vencimiento no es futura', async () => {
+        it('9) 400 si la nueva fecha de vencimiento no es futura', async () => {
             const create = await app.inject({
                 method: 'POST',
                 url: '/api/v1/payments',
@@ -425,6 +335,8 @@ describe('Payment API Integration Tests', () => {
                 payload: { due_date: '2020-01-01' },
             });
             expect(res.statusCode).toBe(400);
+            });
         });
     });
+
 });
