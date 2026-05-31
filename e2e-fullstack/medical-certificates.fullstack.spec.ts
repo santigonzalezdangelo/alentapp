@@ -9,7 +9,7 @@ test.describe('MedicalCertificates Full-Stack E2E', () => {
     });
 
     test('debe crear un certificado real y mostrarlo en la tabla', async ({ page, request }) => {
-        const dni = '13333331';
+        const dni = Math.floor(Math.random() * 90000000 + 10000000).toString();
 
         const memberResponse = await request.post('http://localhost:3001/api/v1/socios', {
             data: {
