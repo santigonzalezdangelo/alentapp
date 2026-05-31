@@ -55,7 +55,7 @@ test.describe('Disciplines Full-Stack E2E', () => {
         await expect(page.getByText('15/05/2026')).toBeVisible();
     });
 
-    test('debe editar la sanción creada y ver el cambio en la tabla', async ({ page, request }) => {
+    test('debe editar la sanción creada y ver el cambio en la tabla', async ({ page }) => {
         await page.goto('/disciplines');
 
         await expect(page.getByText('Conducta inapropiada')).toBeVisible( {timeout: 10000} );
@@ -71,6 +71,18 @@ test.describe('Disciplines Full-Stack E2E', () => {
         await expect(page.getByText('Daño a la propiedad del club')).toBeVisible({ timeout: 10000 });
 
         await expect(page.getByText('Conducta inapropiada', { exact: true })).toBeHidden();
+    });
+
+    test('debe eliminar la sanción y mostrar el estado vacío', async ({ page }) => {
+        await page.goto('/disciplines');
+
+        await expect(page.getByText('Daño a la propiedad del club')).toBeVisible({ timeout: 10000 });
+
+        page.on('dialog', (dialog) => dialog.accept());
+
+        await page.getByRole('button', { name: /Eliminar sanción/i }).first().click();
+
+        await expect(page.getByText('No se encontraron sanciones.')).toBeVisible({ timeout: 10000 });
     });
 
     test.afterAll(async ({ request }) => {
