@@ -1,20 +1,17 @@
 import { test, expect } from '@playwright/test';
+import { API_URL } from './global-setup.js';
 
 test.describe('Disciplines Full-Stack E2E', () => {
     //para poder eliminar el miembro creado al final del test
     let memberId: string;
+    let dni: string;
 
-    test('debe mostrar el estado vacío cuando no hay sanciones en la DB', async ({ page }) => {
-        await page.goto('/disciplines');
-        await expect(page.getByText('No se encontraron sanciones.')).toBeVisible({ timeout: 10000 });
-    });
-
-    test('debe crear una sancion real y mostrarla en la tabla', async ({ page, request }) => {
-        const dni = Math.floor(
+    test.beforeAll(async ({ request }) => {
+        dni = Math.floor(
             10000000 + Math.random() * 90000000
         ).toString();
-        
-        const memberResponse = await request.post('http://localhost:3001/api/v1/socios', {
+
+        const memberResponse = await request.post(`${API_URL}/api/v1/socios`, {
             data: {
                 name: 'Socio E2E Discipline',
                 dni,
@@ -33,6 +30,24 @@ test.describe('Disciplines Full-Stack E2E', () => {
 
         const memberBody = await memberResponse.json();
         memberId = memberBody.data.id;
+    });
+
+    test.afterAll(async ({ request }) => {
+        if (memberId) {
+            const deleteResponse = await request.delete(
+                `${API_URL}/api/v1/socios/${memberId}`
+            );
+
+            expect(deleteResponse.ok()).toBeTruthy();
+        }
+    });
+
+    test('debe mostrar el estado vacío cuando no hay sanciones en la DB', async ({ page }) => {
+        await page.goto('/disciplines');
+        await expect(page.getByText('No se encontraron sanciones.')).toBeVisible({ timeout: 10000 });
+    });
+
+    test('debe crear una sancion real y mostrarla en la tabla', async ({ page }) => {
 
         await page.goto('/disciplines');
 
@@ -83,13 +98,5 @@ test.describe('Disciplines Full-Stack E2E', () => {
         await page.getByRole('button', { name: /Eliminar sanción/i }).first().click();
 
         await expect(page.getByText('No se encontraron sanciones.')).toBeVisible({ timeout: 10000 });
-    });
-
-    test.afterAll(async ({ request }) => {
-        if (memberId){
-            //eliminamos el miembro creado para no dejar datos basura
-            const deleteResponse = await request.delete(`http://localhost:3001/api/v1/socios/${memberId}`);
-            expect(deleteResponse.ok()).toBeTruthy();
-        }
     });
 });
