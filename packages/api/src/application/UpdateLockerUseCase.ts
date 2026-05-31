@@ -49,6 +49,7 @@ const updated: any = { ...data };
 
 if (isMaintenance) {
     updated.status = 'MAINTENANCE';
+    updated.member_id = locker.member_id;
     return this.lockerRepo.update(id, updated);
 }
 
