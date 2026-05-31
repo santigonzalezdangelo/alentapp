@@ -114,8 +114,13 @@ export class PostgresSportRepository implements SportRepository {
 
     async softDelete(id: string): Promise<void> {
         const sport = await prisma.sport.findUnique({ where: { id } });
-            if (!sport || sport.deleted_at) {
-            throw new Error('El deporte no existe o ya fue dado de baja');
+
+        if (!sport) {
+            throw new Error('El deporte no existe');
+        }
+
+        if (sport.deleted_at) {
+            throw new Error('El deporte ya fue dado de baja');
         }
 
         await prisma.sport.update({

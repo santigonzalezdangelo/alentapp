@@ -130,7 +130,7 @@ export function SportsView() {
 
     try {
       await sportsService.delete(id); // Llama DELETE /sports/:id
-      fetchSports(); // Refresca el listado después de eliminar
+      await fetchSports(); // Refresca el listado después de eliminar
     } catch (err: any) {
       alert(err.message || "Error al eliminar el deporte");
     }
