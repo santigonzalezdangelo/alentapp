@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { API_URL } from './global-setup.js';
 
 test.describe('Disciplines Full-Stack E2E', () => {
     //para poder eliminar el miembro creado al final del test
@@ -10,7 +11,7 @@ test.describe('Disciplines Full-Stack E2E', () => {
             10000000 + Math.random() * 90000000
         ).toString();
 
-        const memberResponse = await request.post('http://localhost:3001/api/v1/socios', {
+        const memberResponse = await request.post(`${API_URL}/api/v1/socios`, {
             data: {
                 name: 'Socio E2E Discipline',
                 dni,
@@ -34,7 +35,7 @@ test.describe('Disciplines Full-Stack E2E', () => {
     test.afterAll(async ({ request }) => {
         if (memberId) {
             const deleteResponse = await request.delete(
-                `http://localhost:3001/api/v1/socios/${memberId}`
+                `${API_URL}/api/v1/socios/${memberId}`
             );
 
             expect(deleteResponse.ok()).toBeTruthy();
@@ -46,7 +47,7 @@ test.describe('Disciplines Full-Stack E2E', () => {
         await expect(page.getByText('No se encontraron sanciones.')).toBeVisible({ timeout: 10000 });
     });
 
-    test('debe crear una sancion real y mostrarla en la tabla', async ({ page, request }) => {
+    test('debe crear una sancion real y mostrarla en la tabla', async ({ page }) => {
 
         await page.goto('/disciplines');
 
