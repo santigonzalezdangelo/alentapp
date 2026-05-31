@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { buildApp } from '../app.js';
-import { CreateSportRequest } from '@alentapp/shared';
+import { CreateSportRequest, UpdateSportRequest } from '@alentapp/shared';
 
 vi.mock('../infrastructure/PostgresSportRepository.js', () => {
     const activeSports = [
@@ -52,7 +52,31 @@ vi.mock('../infrastructure/PostgresSportRepository.js', () => {
             }
 
             async update(id: string, data: any) {
-                return { id, name: 'Tenis', ...data, deleted_at: null };
+                const sport = activeSports.find((sport) => sport.id === id);
+
+                if (!sport) {
+                    throw new Error('El deporte no existe');
+                }
+
+                return {
+                    ...sport,
+                    description:
+                        data.description !== undefined
+                            ? data.description.trim()
+                            : sport.description,
+                    max_capacity:
+                        data.max_capacity !== undefined
+                            ? data.max_capacity
+                            : sport.max_capacity,
+                    additional_price:
+                        data.additional_price !== undefined
+                            ? data.additional_price
+                            : sport.additional_price,
+                    requires_medical_certificate:
+                        data.requires_medical_certificate !== undefined
+                            ? data.requires_medical_certificate
+                            : sport.requires_medical_certificate,
+                };
             }
 
             async softDelete() {
@@ -134,6 +158,71 @@ describe('Sport API Integration Tests', () => {
 
             const body = JSON.parse(response.payload);
             expect(body.error).toBe('Ya existe un deporte activo con ese nombre');
+        });
+    });
+
+    describe('PATCH /api/v1/sports/:id', () => {
+        it('debe retornar 200 y actualizar campos editables del deporte', async () => {
+            const payload: UpdateSportRequest = {
+                description: ' Actividad deportiva actualizada ',
+                max_capacity: 30,
+                additional_price: 7000,
+                requires_medical_certificate: false,
+            };
+
+            const response = await app.inject({
+                method: 'PATCH',
+                url: '/api/v1/sports/sport-existing',
+                payload,
+            });
+
+            expect(response.statusCode).toBe(200);
+
+            const body = JSON.parse(response.payload);
+
+            expect(body.data.id).toBe('sport-existing');
+            expect(body.data.name).toBe('Tenis');
+
+            // Debe venir sin espacios porque el repositorio real hace trim.
+            expect(body.data.description).toBe('Actividad deportiva actualizada');
+
+            expect(body.data.max_capacity).toBe(30);
+            expect(body.data.additional_price).toBe(7000);
+
+            // Importante: false es un valor válido, no debe ignorarse.
+            expect(body.data.requires_medical_certificate).toBe(false);
+        });
+
+        it('debe retornar 400 si se intenta modificar el nombre del deporte', async () => {
+            const response = await app.inject({
+                method: 'PATCH',
+                url: '/api/v1/sports/sport-existing',
+                payload: {
+                    name: 'Fútbol',
+                },
+            });
+
+            expect(response.statusCode).toBe(400);
+
+            const body = JSON.parse(response.payload);
+
+            expect(body.error).toBe(
+                'El nombre del deporte no puede modificarse después de la creación',
+            );
+        });
+        it('debe retornar 404 si el deporte no existe', async () => {
+            const response = await app.inject({
+                method: 'PATCH',
+                url: '/api/v1/sports/sport-nonexistent',
+                payload: {
+                    description: 'Intento de actualización',
+                },
+            });
+
+            expect(response.statusCode).toBe(404);
+
+            const body = JSON.parse(response.payload);
+            expect(body.error).toBe('El deporte no existe');
         });
     });
 });
