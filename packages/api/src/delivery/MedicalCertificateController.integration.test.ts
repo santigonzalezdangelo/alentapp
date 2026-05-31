@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { buildApp } from '../app.js';
-import { CreateMedicalCertificateRequest } from '@alentapp/shared';
+import { CreateMedicalCertificateRequest, UpdateMedicalCertificateRequest } from '@alentapp/shared';
 
 vi.mock('../infrastructure/PostgresMedicalCertificateRepository.js', () => {
     return {
@@ -19,7 +19,18 @@ vi.mock('../infrastructure/PostgresMedicalCertificateRepository.js', () => {
             }
 
             async findById(id: string) {
-                return null;
+                return id === 'cert-1'
+                    ? {
+                          id: 'cert-1',
+                          member_id: 'member-1',
+                          issue_date: '2026-01-01',
+                          expiry_date: '2026-12-31',
+                          doctor_license: 'LIC123',
+                          institution: 'Hospital',
+                          status: 'in_review',
+                          deleted_at: null,
+                      }
+                    : null;
             }
 
             async update(id: string, data: any) {
@@ -149,6 +160,53 @@ describe('MedicalCertificate API Integration Tests', () => {
                 method: 'POST',
                 url: '/api/v1/medical-certificates',
                 payload,
+            });
+
+            expect(response.statusCode).toBe(400);
+            const body = JSON.parse(response.payload);
+            expect(body.error).toBe(
+                'La fecha de vencimiento debe ser posterior a la fecha de emisión',
+            );
+        });
+    });
+
+    describe('PATCH /api/v1/medical-certificates/:id', () => {
+        it('debe retornar 200 y actualizar el certificado', async () => {
+            const payload: UpdateMedicalCertificateRequest = {
+                doctor_license: 'LIC999',
+                institution: 'Hospital Actualizado',
+            };
+
+            const response = await app.inject({
+                method: 'PATCH',
+                url: '/api/v1/medical-certificates/cert-1',
+                payload,
+            });
+
+            expect(response.statusCode).toBe(200);
+            const body = JSON.parse(response.payload);
+            expect(body.data.id).toBe('cert-1');
+            expect(body.data.doctor_license).toBe('LIC999');
+            expect(body.data.institution).toBe('Hospital Actualizado');
+        });
+
+        it('debe retornar 404 si el certificado no existe', async () => {
+            const response = await app.inject({
+                method: 'PATCH',
+                url: '/api/v1/medical-certificates/nonexistent',
+                payload: { doctor_license: 'LIC999' },
+            });
+
+            expect(response.statusCode).toBe(404);
+            const body = JSON.parse(response.payload);
+            expect(body.error).toBe('El certificado médico no existe');
+        });
+
+        it('debe retornar 400 si expiry_date no es posterior a issue_date', async () => {
+            const response = await app.inject({
+                method: 'PATCH',
+                url: '/api/v1/medical-certificates/cert-1',
+                payload: { expiry_date: '2025-01-01' },
             });
 
             expect(response.statusCode).toBe(400);
