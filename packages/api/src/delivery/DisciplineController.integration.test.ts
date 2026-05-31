@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { FastifyInstance } from 'fastify';
 import { buildApp } from '../app.js';
-import { CreateDisciplineRequest } from '@alentapp/shared';
+import { CreateDisciplineRequest, UpdateDisciplineRequest } from '@alentapp/shared';
 
 vi.mock('../infrastructure/PostgresDisciplineRepository.js', () => {
     return {
@@ -167,7 +167,7 @@ describe('Discipline API Integration Tests', () => {
 
     describe('PATCH /api/v1/disciplines/:id', () => {
         it('debe retornar 200 y actualizar la sanción', async () => {
-            const payload = {
+            const payload: UpdateDisciplineRequest = {
                 reason: 'Conducta muy inapropiada',
             };
 
@@ -184,7 +184,7 @@ describe('Discipline API Integration Tests', () => {
         });
 
         it('debe retornar 404 si la sancion no existe', async () => {
-            const payload = {
+            const payload: UpdateDisciplineRequest = {
                 reason: "Falta leve",
                 is_total_suspension: false,
             }
@@ -200,7 +200,7 @@ describe('Discipline API Integration Tests', () => {
         });
 
         it('debe retornar 400 si la fecha de fin no es posterior a la fecha de inicio', async () => {
-            const payload = {
+            const payload: UpdateDisciplineRequest = {
                 end_date: '2026-04-30T00:00:00.000Z', //un mes antes
             };
 
