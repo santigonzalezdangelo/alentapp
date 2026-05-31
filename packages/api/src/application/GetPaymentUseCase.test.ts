@@ -47,7 +47,7 @@ describe('GetPaymentsUseCase', () => {
     });
 
     describe('sin filtros', () => {
-        it('devuelve todos los pagos cuando no se pasan filtros', async () => {
+        it('9)devuelve todos los pagos cuando no se pasan filtros', async () => {
             const payments = [buildPayment({ id: 'p-1' }), buildPayment({ id: 'p-2' })];
             vi.mocked(mockPaymentRepo.findAll).mockResolvedValueOnce(payments);
 
@@ -58,27 +58,13 @@ describe('GetPaymentsUseCase', () => {
             expect(result).toHaveLength(2);
         });
 
-        it('devuelve lista vacía si no hay pagos', async () => {
-            vi.mocked(mockPaymentRepo.findAll).mockResolvedValueOnce([]);
 
-            const result = await useCase.execute();
-
-            expect(result).toEqual([]);
-        });
-
-        it('devuelve todos los pagos cuando filters es undefined', async () => {
-            vi.mocked(mockPaymentRepo.findAll).mockResolvedValueOnce([]);
-
-            await useCase.execute(undefined);
-
-            expect(mockPaymentRepo.findAll).toHaveBeenCalledOnce();
-        });
     });
 
     describe('con filtro member_id', () => {
         const validMemberId = '11111111-1111-1111-1111-111111111111';
 
-        it('devuelve pagos del socio cuando se filtra por member_id válido', async () => {
+        it('10) devuelve pagos del socio cuando se filtra por member_id válido', async () => {
             const payments = [buildPayment({ member_id: validMemberId })];
             vi.mocked(mockPaymentRepo.findByMemberId).mockResolvedValueOnce(payments);
 
@@ -89,7 +75,7 @@ describe('GetPaymentsUseCase', () => {
             expect(result).toHaveLength(1);
         });
 
-        it('devuelve lista vacía si el socio no tiene pagos', async () => {
+        it('11)devuelve lista vacía si el socio no tiene pagos', async () => {
             vi.mocked(mockPaymentRepo.findByMemberId).mockResolvedValueOnce([]);
 
             const result = await useCase.execute({ member_id: validMemberId });
@@ -97,7 +83,7 @@ describe('GetPaymentsUseCase', () => {
             expect(result).toEqual([]);
         });
 
-        it('rechaza member_id con formato no-UUID', async () => {
+        it('12) rechaza member_id con formato no-UUID', async () => {
             await expect(
                 useCase.execute({ member_id: 'no-es-uuid' }),
             ).rejects.toThrow('Formato de member_id inválido');

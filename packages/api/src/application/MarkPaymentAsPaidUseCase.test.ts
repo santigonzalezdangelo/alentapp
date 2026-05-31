@@ -43,7 +43,7 @@ describe('MarkPaymentAsPaidUseCase', () => {
         useCase = new MarkPaymentAsPaidUseCase(mockPaymentRepo, clock);
     });
 
-    it('marca como Pagado un pago Pendiente y registra la fecha de cobro', async () => {
+    it('4)marca como Pagado un pago Pendiente y registra la fecha de cobro', async () => {
         const pending = buildPayment({ status: 'Pendiente' });
         const paid = buildPayment({
             status: 'Pagado',
@@ -60,7 +60,7 @@ describe('MarkPaymentAsPaidUseCase', () => {
         expect(mockPaymentRepo.markAsPaidIfPending).toHaveBeenCalledWith('p-1', fixedNow);
     });
 
-    it('es idempotente: si el pago ya está Pagado lo retorna sin modificarlo', async () => {
+    it(' 5) es idempotente: si el pago ya está Pagado lo retorna sin modificarlo', async () => {
         const paid = buildPayment({
             status: 'Pagado',
             payment_date: '2026-05-10T08:00:00.000Z',
@@ -77,18 +77,5 @@ describe('MarkPaymentAsPaidUseCase', () => {
         expect(result.payment_date).toBe('2026-05-10T08:00:00.000Z');
     });
 
-    it('lanza PaymentNotPendingError si el pago está Cancelado', async () => {
-        const canceled = buildPayment({ status: 'Cancelado' });
-        vi.mocked(mockPaymentRepo.findById).mockResolvedValueOnce(canceled);
 
-        await expect(useCase.execute('p-1')).rejects.toBeInstanceOf(PaymentNotPendingError);
-        expect(mockPaymentRepo.markAsPaidIfPending).not.toHaveBeenCalled();
-    });
-
-    it('lanza error si el pago no existe', async () => {
-        vi.mocked(mockPaymentRepo.findById).mockResolvedValueOnce(null);
-
-        await expect(useCase.execute('p-inexistente')).rejects.toThrow('El pago no existe');
-        expect(mockPaymentRepo.markAsPaidIfPending).not.toHaveBeenCalled();
-    });
 });

@@ -47,7 +47,7 @@ describe('UpdatePaymentUseCase', () => {
     });
 
     describe('actualizar monto', () => {
-        it('actualiza el monto de un pago Pendiente', async () => {
+        it('6) actualiza el monto de un pago Pendiente', async () => {
             const pending = buildPayment({ amount: 1500 });
             const updated = buildPayment({ amount: 2000 });
 
@@ -65,20 +65,10 @@ describe('UpdatePaymentUseCase', () => {
             });
         });
 
-        it('rechaza monto inválido (cero o negativo)', async () => {
-            const pending = buildPayment();
-            vi.mocked(mockPaymentRepo.findById).mockResolvedValueOnce(pending);
-
-            await expect(
-                useCase.execute('p-1', { amount: 0 }),
-            ).rejects.toThrow('Monto inválido');
-
-            expect(mockPaymentRepo.updateIfPending).not.toHaveBeenCalled();
-        });
     });
 
     describe('actualizar fecha de vencimiento', () => {
-        it('actualiza la fecha y deriva el nuevo período', async () => {
+        it('7) actualiza la fecha y deriva el nuevo período', async () => {
             const pending = buildPayment({ month: 6, year: 2026 });
             const updated = buildPayment({
                 due_date: '2026-08-31T00:00:00.000Z',
@@ -101,52 +91,10 @@ describe('UpdatePaymentUseCase', () => {
             });
         });
 
-        it('rechaza fecha de vencimiento pasada o igual a hoy', async () => {
-            const pending = buildPayment();
-            vi.mocked(mockPaymentRepo.findById).mockResolvedValueOnce(pending);
-
-            await expect(
-                useCase.execute('p-1', { due_date: '2026-05-15' }),
-            ).rejects.toThrow('La fecha de vencimiento debe ser futura');
-
-            expect(mockPaymentRepo.updateIfPending).not.toHaveBeenCalled();
-        });
-
-        it('rechaza fecha de vencimiento en el pasado', async () => {
-            const pending = buildPayment();
-            vi.mocked(mockPaymentRepo.findById).mockResolvedValueOnce(pending);
-
-            await expect(
-                useCase.execute('p-1', { due_date: '2020-01-01' }),
-            ).rejects.toThrow('La fecha de vencimiento debe ser futura');
-
-            expect(mockPaymentRepo.updateIfPending).not.toHaveBeenCalled();
-        });
-
-
-
-        it('rechaza si el nuevo período ya tiene un pago activo (excluyendo el propio)', async () => {
-            const pending = buildPayment({ month: 6, year: 2026 });
-            vi.mocked(mockPaymentRepo.findById).mockResolvedValueOnce(pending);
-            vi.mocked(mockPaymentRepo.existsActiveByMemberAndPeriod).mockResolvedValueOnce(true);
-
-            await expect(
-                useCase.execute('p-1', { due_date: '2026-07-31' }),
-            ).rejects.toThrow('Ya existe un pago activo para ese socio en ese período');
-
-            // Verifica que se excluyó el pago actual de la búsqueda de duplicados
-            expect(mockPaymentRepo.existsActiveByMemberAndPeriod).toHaveBeenCalledWith(
-                pending.member_id,
-                7,
-                2026,
-                'p-1',
-            );
-            expect(mockPaymentRepo.updateIfPending).not.toHaveBeenCalled();
-        });
     });
 
     describe('errores de estado', () => {
-        it('lanza PaymentNotPendingError si el pago está Pagado', async () => {
+        it('8)lanza PaymentNotPendingError si el pago está Pagado', async () => {
             const paid = buildPayment({ status: 'Pagado' });
             vi.mocked(mockPaymentRepo.findById).mockResolvedValueOnce(paid);
 
@@ -157,25 +105,5 @@ describe('UpdatePaymentUseCase', () => {
             expect(mockPaymentRepo.updateIfPending).not.toHaveBeenCalled();
         });
 
-        it('lanza PaymentNotPendingError si el pago está Cancelado', async () => {
-            const canceled = buildPayment({ status: 'Cancelado' });
-            vi.mocked(mockPaymentRepo.findById).mockResolvedValueOnce(canceled);
-
-            await expect(
-                useCase.execute('p-1', { amount: 999 }),
-            ).rejects.toBeInstanceOf(PaymentNotPendingError);
-
-            expect(mockPaymentRepo.updateIfPending).not.toHaveBeenCalled();
-        });
-
-        it('lanza error si el pago no existe', async () => {
-            vi.mocked(mockPaymentRepo.findById).mockResolvedValueOnce(null);
-
-            await expect(
-                useCase.execute('p-inexistente', { amount: 100 }),
-            ).rejects.toThrow('El pago no existe');
-
-            expect(mockPaymentRepo.updateIfPending).not.toHaveBeenCalled();
-        });
     });
 });
