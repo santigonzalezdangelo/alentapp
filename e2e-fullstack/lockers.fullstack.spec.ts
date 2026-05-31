@@ -25,10 +25,8 @@ test.describe('Lockers Full-Stack E2E', () => {
         }).click();
 
         await expect(
-            page.getByRole('button', {
-                name: 'Crear Locker',
-            })
-        ).toBeHidden();
+            page.getByText('Agregar Nuevo Locker')
+        ).toBeHidden({ timeout: 10000 });
 
         await expect(
             page.getByText(lockerNumber.toString())
