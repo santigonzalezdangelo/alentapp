@@ -35,7 +35,23 @@ export class PaymentValidator {
     }
 
     validateDueDateIsFuture(due_date: Date): void {
-        // Validation removed to allow past debt registration as requested
+        const now = this.clock.now();
+
+        const today = new Date(Date.UTC(
+            now.getUTCFullYear(),
+            now.getUTCMonth(),
+            now.getUTCDate(),
+        ));
+
+        const dueDateDay = new Date(Date.UTC(
+            due_date.getUTCFullYear(),
+            due_date.getUTCMonth(),
+            due_date.getUTCDate(),
+        ));
+
+        if (dueDateDay <= today) {
+            throw new Error('La fecha de vencimiento debe ser futura');
+        }
     }
 
     extractPeriod(due_date: Date): { month: number; year: number } {
