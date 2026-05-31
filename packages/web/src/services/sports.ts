@@ -50,14 +50,14 @@ export const sportsService = {
     return result.data;
   },
   
-  async delete(id: string) {
-    const res = await fetch(`${API_URL}/sports/${id}`, { method: 'DELETE' });
+  async delete(id: string): Promise<void> {
+    const res = await fetch(`${API_URL}/sports/${id}`, {
+        method: 'DELETE',
+    });
 
     if (!res.ok) {
-      const errorData = await res.json();
-      throw new Error(errorData.error || 'Error al eliminar el deporte');
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Error al eliminar el deporte');
     }
-
-    return res.json();
-  },
+  }
 };
