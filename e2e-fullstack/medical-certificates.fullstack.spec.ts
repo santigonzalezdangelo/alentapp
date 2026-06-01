@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { API_URL } from './global-setup.js';
 
 test.describe('MedicalCertificates Full-Stack E2E', () => {
     let memberId: string;
@@ -12,7 +13,7 @@ test.describe('MedicalCertificates Full-Stack E2E', () => {
     test('debe crear un certificado real y mostrarlo en la tabla', async ({ page, request }) => {
         const dni = Math.floor(Math.random() * 90000000 + 10000000).toString();
 
-        const memberResponse = await request.post('http://localhost:3001/api/v1/socios', {
+        const memberResponse = await request.post(`${API_URL}/api/v1/socios`, {
             data: {
                 name: 'Socio E2E MC Fullstack',
                 dni,
@@ -75,7 +76,7 @@ test.describe('MedicalCertificates Full-Stack E2E', () => {
     test.afterAll(async ({ request }) => {
         if (memberId) {
             const deleteResponse = await request.delete(
-                `http://localhost:3001/api/v1/socios/${memberId}`,
+                `${API_URL}/api/v1/socios/${memberId}`,
             );
             expect(deleteResponse.ok()).toBeTruthy();
         }
