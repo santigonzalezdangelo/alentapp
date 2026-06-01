@@ -19,18 +19,43 @@ vi.mock('../infrastructure/PostgresMedicalCertificateRepository.js', () => {
             }
 
             async findById(id: string) {
-                return id === 'cert-1'
-                    ? {
-                          id: 'cert-1',
-                          member_id: 'member-1',
-                          issue_date: '2026-01-01',
-                          expiry_date: '2026-12-31',
-                          doctor_license: 'LIC123',
-                          institution: 'Hospital',
-                          status: 'in_review',
-                          deleted_at: null,
-                      }
-                    : null;
+                if (id === 'b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22') {
+                    return {
+                        id: 'b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+                        member_id: 'member-1',
+                        issue_date: '2026-01-01',
+                        expiry_date: '2026-12-31',
+                        doctor_license: 'LIC123',
+                        institution: 'Hospital',
+                        status: 'in_review',
+                        deleted_at: '2026-01-01',
+                    };
+                }
+                if (id === 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11') {
+                    return {
+                        id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+                        member_id: 'member-1',
+                        issue_date: '2026-01-01',
+                        expiry_date: '2026-12-31',
+                        doctor_license: 'LIC123',
+                        institution: 'Hospital',
+                        status: 'in_review',
+                        deleted_at: null,
+                    };
+                }
+                if (id === 'cert-1') {
+                    return {
+                        id: 'cert-1',
+                        member_id: 'member-1',
+                        issue_date: '2026-01-01',
+                        expiry_date: '2026-12-31',
+                        doctor_license: 'LIC123',
+                        institution: 'Hospital',
+                        status: 'in_review',
+                        deleted_at: null,
+                    };
+                }
+                return null;
             }
 
             async update(id: string, data: any) {
@@ -214,6 +239,40 @@ describe('MedicalCertificate API Integration Tests', () => {
             expect(body.error).toBe(
                 'La fecha de vencimiento debe ser posterior a la fecha de emisión',
             );
+        });
+    });
+
+    describe('DELETE /api/v1/medical-certificates/:id', () => {
+        it('debe retornar 204 y eliminar el certificado', async () => {
+            const response = await app.inject({
+                method: 'DELETE',
+                url: '/api/v1/medical-certificates/a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+            });
+
+            expect(response.statusCode).toBe(204);
+            expect(response.payload).toBe('');
+        });
+
+        it('debe retornar 404 si el certificado no existe', async () => {
+            const response = await app.inject({
+                method: 'DELETE',
+                url: '/api/v1/medical-certificates/c2eebc99-9c0b-4ef8-bb6d-6bb9bd380a33',
+            });
+
+            expect(response.statusCode).toBe(404);
+            const body = JSON.parse(response.payload);
+            expect(body.error).toBe('El certificado médico no existe');
+        });
+
+        it('debe retornar 409 si el certificado ya fue dado de baja', async () => {
+            const response = await app.inject({
+                method: 'DELETE',
+                url: '/api/v1/medical-certificates/b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
+            });
+
+            expect(response.statusCode).toBe(409);
+            const body = JSON.parse(response.payload);
+            expect(body.error).toBe('El certificado médico ya fue dado de baja');
         });
     });
 });
