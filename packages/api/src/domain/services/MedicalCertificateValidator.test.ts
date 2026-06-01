@@ -94,7 +94,7 @@ describe('MedicalCertificateValidator', () => {
         it('debe pasar si la fecha de vencimiento es futura', () => {
             const futureDate = new Date();
             futureDate.setFullYear(futureDate.getFullYear() + 1);
-            const futureStr = futureDate.toISOString().split('T')[0];
+            const futureStr = futureDate.toLocaleDateString('en-CA');
 
             expect(() =>
                 validator.validateExpiryIsFuture(futureStr)
@@ -103,7 +103,7 @@ describe('MedicalCertificateValidator', () => {
 
         it('debe lanzar error si la fecha de vencimiento es hoy o pasada', () => {
             const today = new Date();
-            const todayStr = today.toISOString().split('T')[0];
+            const todayStr = today.toLocaleDateString('en-CA');
 
             expect(() =>
                 validator.validateExpiryIsFuture(todayStr)
