@@ -42,6 +42,22 @@ vi.mock('../infrastructure/PostgresLockerRepository.js', () => {
             member_id: 'member-1',
             contract_end_date: null,
         },
+        {
+            id: '11111111-1111-1111-1111-111111111111',
+            number: 40,
+            location: 'MALE',
+            status: 'AVAILABLE',
+            member_id: null,
+            contract_end_date: null,
+        },
+        {
+            id: '33333333-3333-3333-3333-333333333333',
+            number: 50,
+            location: 'MALE',
+            status: 'OCCUPIED',
+            member_id: 'member-1',
+            contract_end_date: null,
+        },
     ];
 
     return {
@@ -128,7 +144,7 @@ describe('Locker API Integration Tests', () => {
 
             const body = JSON.parse(response.payload);
 
-            expect(body.data.length).toBe(3);
+            expect(body.data.length).toBe(5);
             expect(body.data[0].number).toBe(10);
         });
     });
@@ -228,6 +244,39 @@ describe('Locker API Integration Tests', () => {
             expect(response.statusCode).toBe(409);
             const body = JSON.parse(response.payload);
             expect(body.message).toBe('El locker ya se encuentra asignado');
+        });
+    });
+
+    describe('DELETE /api/v1/lockers/:id', () => {
+        it('debe retornar 204 al eliminar un locker disponible', async () => {
+            const response = await app.inject({
+                method: 'DELETE',
+                url: '/api/v1/lockers/11111111-1111-1111-1111-111111111111',
+            });
+
+            expect(response.statusCode).toBe(204);
+        });
+
+        it('debe retornar 404 si el locker no existe', async () => {
+            const response = await app.inject({
+                method: 'DELETE',
+                url: '/api/v1/lockers/00000000-0000-0000-0000-000000000000',
+            });
+
+            expect(response.statusCode).toBe(404);
+            const body = JSON.parse(response.payload);
+            expect(body.message).toBe('El locker no existe');
+        });
+
+        it('debe retornar 409 si el locker está ocupado', async () => {
+            const response = await app.inject({
+                method: 'DELETE',
+                url: '/api/v1/lockers/33333333-3333-3333-3333-333333333333',
+            });
+
+            expect(response.statusCode).toBe(409);
+            const body = JSON.parse(response.payload);
+            expect(body.message).toBe('No se puede eliminar un locker ocupado');
         });
     });
 });

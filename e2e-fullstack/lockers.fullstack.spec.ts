@@ -1,10 +1,11 @@
 import { test, expect } from '@playwright/test';
+import { API_URL } from './global-setup.js';
 
 let lockerNumber: number;
 let lockerId: string;
 
 test.describe('Lockers Full-Stack E2E', () => {
-    test('debe crear un locker real, mostrarlo en la tabla y rechazar número duplicado', async ({ page, request }) => {
+    test('debe crear un locker real, mostrarlo en la tabla y rechazar número duplicado', async ({ page }) => {
         await page.goto('/lockers');
 
         await page.getByRole('button', {
@@ -76,7 +77,7 @@ test('debe editar el locker creado y cambiar su estado a mantenimiento', async (
     ).toBeVisible({ timeout: 10000 });
 
     // Guardamos el id para limpieza
-    const lockersResponse = await request.get('http://localhost:3001/api/v1/lockers');
+    const lockersResponse = await request.get(`${API_URL}/api/v1/lockers`);
     const lockersBody = await lockersResponse.json();
     const createdLocker = lockersBody.data.find((l: any) => l.number === lockerNumber);
     if (createdLocker) lockerId = createdLocker.id;
@@ -102,9 +103,26 @@ test('debe editar el locker creado y cambiar su estado a mantenimiento', async (
     ).toBeVisible({ timeout: 10000 });
 });
 
+test('debe eliminar el locker y verificar que desaparece de la tabla', async ({ page }) => {
+    await page.goto('/lockers');
+
+    await expect(
+        page.getByText(lockerNumber.toString())
+    ).toBeVisible({ timeout: 10000 });
+
+    page.on('dialog', (dialog) => dialog.accept());
+
+    const row = page.getByRole('row').filter({ hasText: lockerNumber.toString() });
+    await row.getByLabel('Eliminar locker').click();
+
+    await expect(
+        page.getByText(lockerNumber.toString())
+    ).toBeHidden({ timeout: 10000 });
+});
+
 test.afterAll(async ({ request }) => {
     if (lockerId) {
-        await request.delete(`http://localhost:3001/api/v1/lockers/${lockerId}`);
+        await request.delete( `${API_URL}/api/v1/lockers/${lockerId}`);
     }
 });
 });
