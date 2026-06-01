@@ -102,6 +102,23 @@ test('debe editar el locker creado y cambiar su estado a mantenimiento', async (
     ).toBeVisible({ timeout: 10000 });
 });
 
+test('debe eliminar el locker y verificar que desaparece de la tabla', async ({ page, request }) => {
+    await page.goto('/lockers');
+
+    await expect(
+        page.getByText(lockerNumber.toString())
+    ).toBeVisible({ timeout: 10000 });
+
+    page.on('dialog', (dialog) => dialog.accept());
+
+    const row = page.getByRole('row').filter({ hasText: lockerNumber.toString() });
+    await row.getByLabel('Eliminar locker').click();
+
+    await expect(
+        page.getByText(lockerNumber.toString())
+    ).toBeHidden({ timeout: 10000 });
+});
+
 test.afterAll(async ({ request }) => {
     if (lockerId) {
         await request.delete(`http://localhost:3001/api/v1/lockers/${lockerId}`);
