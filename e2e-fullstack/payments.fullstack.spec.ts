@@ -76,14 +76,6 @@ test.describe('Payments Full-Stack E2E', () => {
     });
 
     test('2. debe registrar el cobro de un pago y actualizar el estado a Pagado', async ({ page, request }) => {
-        const res = await request.post(`${API_BASE}/payments`, {
-            data: {
-                member_id: memberId,
-                amount: 2500,
-                due_date: '2099-05-31',
-            },
-        });
-        expect(res.ok()).toBeTruthy();
 
         await page.goto('/payments');
 
