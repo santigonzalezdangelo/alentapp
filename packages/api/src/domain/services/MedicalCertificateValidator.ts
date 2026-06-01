@@ -50,8 +50,8 @@ export class MedicalCertificateValidator {
 
     validateExpiryIsFuture(expiryDate: string): void {
         const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const expiry = new Date(expiryDate + 'T00:00:00');
+        today.setUTCHours(0, 0, 0, 0);
+        const expiry = new Date(expiryDate + 'T00:00:00Z');
         if (expiry <= today) {
             throw new Error('No se puede validar un certificado vencido');
         }
