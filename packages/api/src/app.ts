@@ -1,6 +1,14 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import 'dotenv/config';
+import './infrastructure/telemetry.js';
+import {
+  requestCounter,
+  errorCounter,
+  requestDuration,
+  activeRequests,
+} from './infrastructure/telemetry.js';
+
 
 import { PostgresMemberRepository } from './infrastructure/PostgresMemberRepository.js';
 import { PostgresMedicalCertificateRepository } from './infrastructure/PostgresMedicalCertificateRepository.js';
@@ -77,14 +85,51 @@ export function buildApp() {
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: true,
     });
-    
+
+
+    server.addHook('onRequest', async (request) => {
+       
+        (request as any).startTime = Date.now();
+
+
+        const route = request.routeOptions?.url ?? request.url.split('?')[0];
+
+        activeRequests.add(1, {
+            method: request.method,
+            route,
+        });
+    });
+
+    server.addHook('onResponse', async (request, reply) => {
+        const route  = request.routeOptions?.url ?? request.url.split('?')[0];
+        const method = request.method;
+        const status = String(reply.statusCode);
+        const duration = Date.now() - ((request as any).startTime ?? Date.now());
+
+        const labels = { method, route, status };
+
+        
+        requestCounter.add(1, labels);
+
+      
+        requestDuration.record(duration, { method, route });
+
+      
+        if (reply.statusCode >= 400) {
+            errorCounter.add(1, labels);
+        }
+
+        
+        activeRequests.add(-1, { method, route });
+    });
+
+
+
     const lockerRepo = new PostgresLockerRepository();
     const lockerValidator = new LockerValidator(lockerRepo);
 
 
-    // ============================================================
-    // Members
-    // ============================================================
+
     const memberRepo = new PostgresMemberRepository();
     const medicalCertificateRepo = new PostgresMedicalCertificateRepository();
     const memberValidator = new MemberValidator(memberRepo);
@@ -141,9 +186,7 @@ lockerRepo
         deleteMedicalCertificateUseCase,
     );
 
-    // ============================================================
-    // Disciplines
-    // ============================================================
+
     const disciplineRepo = new PostgresDisciplineRepository();
     const disciplineValidator = new DisciplineValidator(memberRepo);
     const getDisciplinesUseCase = new GetDisciplinesUseCase(disciplineRepo);
@@ -158,9 +201,7 @@ lockerRepo
         deleteDisciplineUseCase,
     );
 
-    // ============================================================
-    // Sports
-    // ============================================================
+
     const sportRepo = new PostgresSportRepository();
     const sportValidator = new SportValidator();
 
@@ -177,9 +218,7 @@ lockerRepo
         deleteSportUseCase,
     );
 
-    // ============================================================
-// Payments
-// ============================================================
+
 const clock = new SystemClock();
 const paymentRepo = new PostgresPaymentRepository();
 const paymentValidator = new PaymentValidator(clock);
@@ -203,25 +242,20 @@ const paymentController = new PaymentController(
     cancelPaymentUseCase,
 );
 
-// ============================================================
-// Cancelación automática de payments vencidos (TDD-0018)
-// ============================================================
+
 const cancelExpiredPaymentsUseCase = new CancelExpiredPaymentsUseCase(
     paymentRepo,
     cancelPaymentUseCase,
     clock,
 );
 
-// Schedule: todos los días a las 00:30 hs
+
 cron.schedule('30 0 * * *', () => {
     cancelExpiredPaymentsUseCase.execute().catch((err) => {
         server.log.error({ err }, 'Error ejecutando CancelExpiredPaymentUseCase');
     });
 });
-// ============================================================
-    // ============================================================
-    // Routes
-    // ============================================================
+
     server.get('/api/v1/socios', memberController.getAll.bind(memberController));
     server.post('/api/v1/socios', memberController.create.bind(memberController));
     server.put('/api/v1/socios/:id', memberController.update.bind(memberController));
@@ -253,6 +287,10 @@ cron.schedule('30 0 * * *', () => {
     server.patch('/api/v1/payments/:id/pay', paymentController.pay.bind(paymentController));
     server.patch('/api/v1/payments/:id/cancel', paymentController.cancel.bind(paymentController));
 
+    server.get('/health', async (_req, rep) => {
+        rep.status(200).send({ status: 'ok' });
+    });
+
     server.get('/', async (req, rep) => {
         rep.status(200).send({ msg: 'asd' });
     });
@@ -260,8 +298,7 @@ cron.schedule('30 0 * * *', () => {
     return server;
 }
 
-// Solo iniciar el servidor si el script se ejecuta directamente (no cuando es importado por vitest)
-if (process.argv[1] && process.argv[1].endsWith('app.ts')) {
+if (process.argv[1] && (process.argv[1].endsWith('app.ts') || process.argv[1].endsWith('app.js'))) {
     const server = buildApp();
     const port = parseInt(process.env.PORT || '3000', 10);
 
