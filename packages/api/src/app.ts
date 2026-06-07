@@ -1,6 +1,3 @@
-import Fastify from 'fastify';
-import cors from '@fastify/cors';
-import 'dotenv/config';
 import './infrastructure/telemetry.js';
 import {
   requestCounter,
@@ -8,6 +5,11 @@ import {
   requestDuration,
   activeRequests,
 } from './infrastructure/telemetry.js';
+
+
+import Fastify from 'fastify';
+import cors from '@fastify/cors';
+import 'dotenv/config';
 
 
 import { PostgresMemberRepository } from './infrastructure/PostgresMemberRepository.js';
