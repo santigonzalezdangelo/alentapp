@@ -1,0 +1,160 @@
+{
+  "__inputs": [],
+  "__requires": [],
+  "annotations": { "list": [] },
+  "description": "Dashboard RED (Rate, Errors, Duration) para la API de Alentapp",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+
+    {
+      "id": 1,
+      "title": "Requests por segundo",
+      "description": "Tasa de requests HTTP procesadas por la API en el último minuto",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total[1m]))",
+          "legendFormat": "req/s total",
+          "refId": "A"
+        },
+        {
+          "expr": "sum by (route) (rate(http_requests_total[1m]))",
+          "legendFormat": "{{route}}",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "color": { "mode": "palette-classic" }
+        }
+      },
+      "options": { "tooltip": { "mode": "multi" } }
+    },
+
+    {
+      "id": 2,
+      "title": "Tasa de error (%)",
+      "description": "Porcentaje de requests que finalizan con status >= 400",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_errors_total[1m])) / sum(rate(http_requests_total[1m])) * 100",
+          "legendFormat": "% error",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 5 }
+            ]
+          }
+        }
+      }
+    },
+
+    {
+      "id": 3,
+      "title": "Latencia p95 / p99",
+      "description": "Percentiles de duración de requests (ms). p99 = el 99% de las requests tardan menos que este valor",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_bucket[5m])) by (le))",
+          "legendFormat": "p95",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_bucket[5m])) by (le))",
+          "legendFormat": "p99",
+          "refId": "B"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms" }
+      }
+    },
+
+    {
+      "id": 4,
+      "title": "Requests por status code",
+      "description": "Distribución de respuestas HTTP agrupadas por código de estado",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [
+        {
+          "expr": "sum by (status) (rate(http_requests_total[5m]))",
+          "legendFormat": "{{status}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "reqps", "custom": { "stacking": { "mode": "normal" } } }
+      }
+    },
+
+
+    {
+      "id": 6,
+      "title": "Errores por endpoint",
+      "description": "Cantidad de errores agrupados por ruta para identificar endpoints problemáticos",
+      "type": "barchart",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "targets": [
+        {
+          "expr": "sum by (route) (increase(http_requests_errors_total[5m]))",
+          "legendFormat": "{{route}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short" }
+      },
+      "options": { "orientation": "horizontal" }
+    },
+
+    {
+      "id": 7,
+      "title": "Endpoints más lentos (top 5)",
+      "description": "Top 5 rutas con mayor latencia promedio — útil para detectar cuellos de botella",
+      "type": "barchart",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "targets": [
+        {
+          "expr": "topk(5, avg by (route) (rate(http_request_duration_sum[5m]) / rate(http_request_duration_count[5m])))",
+          "legendFormat": "{{route}}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms" }
+      },
+      "options": { "orientation": "horizontal" }
+    }
+
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "tags": ["alentapp", "RED", "api"],
+  "time": { "from": "now-15m", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "RED — Alentapp API",
+  "uid": "alentapp-red-dashboard",
+  "version": 1
+}
