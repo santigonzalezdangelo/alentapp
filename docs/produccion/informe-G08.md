@@ -73,4 +73,49 @@ alentapp-web          alentapp-web:prod        Up (healthy)
 
 ---
 
+## 4.2. Verificación de Seguridad
+
+| Medida | Verificación | Resultado |
+|--------|-------------|-----------|
+| Usuario no-root | La API corre con el usuario `node` definido en el Dockerfile.prod | ✅ |
+| Sin herramientas de build | `tsc` y `npm` no están disponibles en la imagen final | ✅ |
+| Read-only filesystem | `docker exec alentapp-web touch /test` falla con `Read-only file system`. La API tiene `read_only: false` por compatibilidad con Prisma. | ✅ |
+| Capabilities mínimas | `cap_drop: ALL` aplicado en el compose productivo. Se verificó que `docker exec alentapp-api date -s "2020-01-01"` falla con `Operation not permitted`. | ✅ |
+| Variables sensibles via `.env` | `DATABASE_URL`, `POSTGRES_PASSWORD` y demás variables no están hardcodeadas en el compose | ✅ |
+| Healthchecks funcionando | `docker compose ps` muestra estado `healthy` en api, web y db | ✅ |
+| Límites de recursos | CPU y memoria definidos por servicio en el compose productivo | ✅ |
+| Logging con rotación | Driver `json-file` con `max-size: 10m` y `max-file: 3` | ✅ |
+
+---
+
+## 4.3. Verificación de Observabilidad
+
+| Ítem | Verificación | Resultado |
+|------|-------------|-----------|
+| OpenTelemetry expone métricas | `docker exec alentapp-api wget -qO- http://localhost:9464/metrics` devuelve métricas en formato Prometheus | ✅ |
+| Prometheus scrapea el endpoint | Target `alentapp-otel` en estado **UP** en `http://localhost:9090/targets` | ✅ |
+| Métricas RED presentes | `http_requests_total`, `http_request_duration`, `http_requests_errors_total`, `http_requests_active` visibles en el endpoint | ✅ |
+| Rutas normalizadas | Las métricas registran `/api/v1/socios/:id` en lugar de `/api/v1/socios/99999` | ✅ |
+| Grafana datasource configurado | Prometheus configurado como datasource apuntando a `http://prometheus:9090` | ✅ |
+| Dashboard RED funcional | 6 paneles visibles con datos reales | ✅ |
+| Paneles responden al tráfico | Los gráficos actualizan en tiempo real al generar requests | ✅ |
+| Métricas de error reflejan 4xx | El panel "Tasa de error %" y "Errores por endpoint" muestran las requests a rutas inexistentes | ✅ |
+
+### Métricas verificadas en el endpoint
+
+```
+# HELP http_requests_total Total de requests HTTP
+# TYPE http_requests_total counter
+http_requests_total{method="GET",route="/health",status="200"} 36
+
+# HELP http_request_duration Duración de requests en ms
+# TYPE http_request_duration histogram
+http_request_duration_count{method="GET",route="/health"} 36
+
+# HELP http_requests_active Requests concurrentes en ejecución
+# TYPE http_requests_active gauge
+http_requests_active{method="GET",route="/health"} 0
+```
+
+---
 
