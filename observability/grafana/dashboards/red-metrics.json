@@ -45,7 +45,7 @@
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
       "targets": [
         {
-          "expr": "sum(rate(http_requests_errors_total[1m])) / sum(rate(http_requests_total[1m])) * 100",
+          "expr": "sum(rate(http_requests_errors_total[1m])) / (sum(rate(http_requests_total[1m])) > 0) * 100",
           "legendFormat": "% error",
           "refId": "A"
         }
