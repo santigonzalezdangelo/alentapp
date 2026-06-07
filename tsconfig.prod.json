@@ -1,0 +1,21 @@
+{
+    "extends": "./tsconfig.json",
+    "include": [
+        "packages/api/src/**/*.ts",
+        "packages/shared/**/*.ts",
+        "packages/api/src/index.ts"
+    ],
+    "exclude": [
+        "**/*.test.ts",
+        "**/*.spec.ts",
+        "**/*.e2e.test.ts",
+        "**/vitest.config.*",
+        "**/prisma.config.*",
+        "**/e2e-fullstack/**",
+        "packages/web"
+    ],
+    "compilerOptions": {
+        "outDir": ".",
+        "rootDir": "."
+    }
+}
