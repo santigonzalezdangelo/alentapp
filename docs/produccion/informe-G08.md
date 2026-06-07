@@ -119,3 +119,84 @@ http_requests_active{method="GET",route="/health"} 0
 
 ---
 
+## 4.4. Documentación de Decisiones
+
+### Arquitectura final del sistema
+
+```text
+[Browser]
+    │
+    ▼
+[nginx — puerto 80]          ← alentapp-web:prod (React compilado)
+    │
+    ▼ (requests a /api)
+[Fastify API — puerto 3000]  ← alentapp-api:prod
+    │                    │
+    ▼                    ▼
+[PostgreSQL:5432]   [OTel Exporter — puerto 9464]
+                         │
+                         ▼
+                    [Prometheus — puerto 9090]
+                         │
+                         ▼
+                    [Grafana — puerto 3001]
+```
+
+Todos los servicios se comunican dentro de la red Docker `alentapp-network` usando nombres de servicio. El puerto 9464 de métricas no está expuesto al host, solo accesible desde la red interna.
+
+### Decisiones técnicas
+
+**Multi-stage build para la API**
+Se eligió un build en tres etapas (deps → build → runtime) para separar claramente la instalación de dependencias, la compilación de TypeScript y la ejecución. Esto permite que la imagen final contenga únicamente el código compilado y las dependencias de producción, sin incluir TypeScript, tsx ni ninguna herramienta de desarrollo.
+
+**nginx para el frontend**
+En lugar de servir el frontend con Node.js en producción, se optó por nginx:stable-alpine como runtime final. Esto redujo la imagen de 223 MB a 23.3 MB (reducción del 90%) y mejora significativamente la performance de entrega de assets estáticos.
+
+**Capa centralizada de métricas RED en app.ts**
+En lugar de instrumentar cada controller manualmente, las métricas RED se implementaron mediante los hooks `onRequest` y `onResponse` de Fastify directamente en `app.ts`. Esto garantiza que todos los endpoints queden cubiertos de forma uniforme sin duplicar lógica, y permite que los controllers mantengan su única responsabilidad.
+
+**Puerto 9464 solo en red interna**
+El endpoint de métricas de OpenTelemetry no se expone al host. Prometheus accede a él desde dentro de la red Docker usando el nombre de servicio `api:9464`. Esto reduce la superficie de ataque y sigue el principio de mínimo privilegio.
+
+**PrometheusExporter en lugar de OTLP**
+Se eligió exportar directamente a Prometheus en lugar de usar un collector OTLP intermedio. Para el alcance del proyecto esto simplifica la arquitectura sin perder funcionalidad, ya que Prometheus puede scrapear directamente el endpoint expuesto por el SDK de OpenTelemetry.
+
+### Problemas encontrados y soluciones
+
+**El import de telemetry.ts no era el primero en app.ts**
+Si OTel no se inicializa antes que el resto de los módulos, los auto-instrumentations de Fastify y HTTP no parchean correctamente los módulos y las métricas automáticas no se generan. El síntoma es que el endpoint /metrics existe pero está vacío o solo muestra target_info. Se resolvió moviendo el import de telemetry.ts a la primera línea del archivo.
+
+**División por cero en la métrica de tasa de error**
+Al arrancar la aplicación, antes de recibir cualquier request, la query de tasa de error calculaba: `sum(rate(http_requests_errors_total[1m])) / sum(rate(http_requests_total[1m])) * 100` Como el denominador era 0, Prometheus devolvía NaN y el panel de "Tasa de error %" aparecía vacío o con un valor inválido. Solución: usar `clamp_min` para forzar un mínimo de 1 en el denominador. 
+
+**Puerto 9464 no accesible desde el host**
+Al intentar verificar las métricas con `curl http://localhost:9464/metrics` desde la terminal, la conexión fue rechazada. Esto era esperado porque el puerto está intencionalmente no mapeado al host. Se resolvió ejecutando el curl desde dentro del contenedor con `docker exec alentapp-api wget -qO- http://localhost:9464/metrics`.
+
+### Capturas del dashboard RED
+
+> - Vista general del dashboard con tráfico continuo de healthchecks:
+![Dashboard RED - Vista general](imagenes/dashboard-vista-general.png)
+
+> - Dashboard durante el pico de tráfico generado con el script de prueba:
+![Dashboard RED - Pico de tráfico](imagenes/dashboard-pico-trafico.png)
+
+> - Panel Requests por segundo — se observa el pico al correr el script de prueba:
+![Panel Requests por segundo](imagenes/panel-requests-por-segundo.png)
+
+> - Panel Tasa de error — muestra el spike de errores 4xx generados:
+![Panel Tasa de error](imagenes/panel-tasa-de-error.png)
+
+> - Panel Latencia p95/p99 — la latencia p99 sube a ~20ms durante el pico de tráfico:
+![Panel Latencia p95/p99](imagenes/panel-latencia-p95-p99.png)
+
+> - Panel Requests por status code — distribución entre respuestas 200 y 404:
+![Panel Requests por status code](imagenes/panel-requests-status-code.png)
+
+> - Panel Errores por endpoint — identifica `/api/v1/socios/99999` y `/api/v1/sports/99999` como endpoints con errores:
+![Panel Errores por endpoint](imagenes/panel-errores-por-endpoint.png)
+
+> - Panel Endpoints más lentos — top 5 rutas ordenadas por latencia promedio:
+![Panel Endpoints más lentos](imagenes/panel-endpoints-mas-lentos.png)
+
+
+
