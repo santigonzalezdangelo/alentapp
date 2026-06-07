@@ -198,5 +198,14 @@ Al intentar verificar las métricas con `curl http://localhost:9464/metrics` des
 > - Panel Endpoints más lentos — top 5 rutas ordenadas por latencia promedio:
 ![Panel Endpoints más lentos](imagenes/panel-endpoints-mas-lentos.png)
 
+## 4.5. Conclusiones
+
+La implementación de la Fase 3 permitió alcanzar los siguientes resultados concretos:
+
+- **Reducción de tamaño de imágenes** del 67% en la API y del 90% en el frontend mediante multi-stage builds.
+- **Mejora de seguridad** al eliminar herramientas de desarrollo del runtime, correr con usuario no-root, filesystem read-only y capabilities mínimas.
+- **Observabilidad real** del sistema: las métricas RED (Rate, Errors, Duration) se capturan automáticamente para todos los endpoints sin modificar ningún controller, y son visibles en tiempo real en el dashboard de Grafana.
+- **Separación clara de entornos**: el `docker-compose.prod.yml` no tiene bind mounts de código fuente, no usa watchers y no expone puertos innecesarios al exterior.
+
 
 
